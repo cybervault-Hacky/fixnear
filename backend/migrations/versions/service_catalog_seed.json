@@ -1,0 +1,364 @@
+[
+  {
+    "slug": "ac-repair",
+    "title": "AC Repair",
+    "home_title": "AC repair",
+    "home_description": "Cooling and airflow",
+    "description": "Understand common air-conditioning problems, the checks a repair visit may involve, and how proposed work can be explained before you decide.",
+    "listing_description": "Cooling, airflow, drainage and operating issues for split and window air conditioners.",
+    "keywords": [
+      "air conditioner",
+      "air conditioning",
+      "cooling",
+      "airflow",
+      "split ac",
+      "window ac"
+    ],
+    "common_problems": [
+      {
+        "title": "Running but not cooling",
+        "description": "The unit turns on, but the room stays warm or takes longer than usual to cool."
+      },
+      {
+        "title": "Water around the indoor unit",
+        "description": "Drips or damp patches may be associated with drainage, installation or other issues."
+      },
+      {
+        "title": "Unusual noise or smell",
+        "description": "Rattling, buzzing or a musty odour can be useful details to share before inspection."
+      },
+      {
+        "title": "Weak airflow or frequent stops",
+        "description": "Low airflow, short cycling or difficulty starting may need an in-person assessment."
+      }
+    ],
+    "inspection_scope": [
+      "Discuss symptoms, recent changes and the unit type or model.",
+      "Inspect accessible filters, airflow, drainage and visible connections as appropriate.",
+      "Explain findings and outline any recommended work before parts or additional labour are considered.",
+      "Record the agreed scope and any customer-approved changes in the service notes."
+    ],
+    "questions": [
+      {
+        "question": "Why might an AC run without cooling well?",
+        "answer": "Possible causes range from restricted airflow to electrical or refrigerant-system issues. A symptom description cannot confirm the cause; an inspection is needed before recommending repair."
+      },
+      {
+        "question": "Should I clean the filter before an inspection?",
+        "answer": "You can check the manufacturer guidance for your model and clean only parts intended for user maintenance. Do not open electrical or refrigerant components."
+      },
+      {
+        "question": "Does an estimate include replacement parts?",
+        "answer": "A clear estimate should list inspection, labour and any proposed parts separately where applicable. Ask for the scope to be explained before approving work."
+      }
+    ],
+    "related_service_slugs": [
+      "electrical",
+      "plumbing",
+      "refrigerator-repair"
+    ],
+    "category_slug": "appliance-repair"
+  },
+  {
+    "slug": "refrigerator-repair",
+    "title": "Refrigerator Repair",
+    "home_title": "Refrigerator repair",
+    "home_description": "Fridges and freezers",
+    "description": "Explore refrigerator symptoms, useful information to share, and the checks that may be discussed before repair work is proposed.",
+    "listing_description": "Cooling, frost, water, noise and power symptoms for refrigerators and freezers.",
+    "keywords": [
+      "fridge",
+      "freezer",
+      "not cooling",
+      "frost",
+      "ice maker",
+      "compressor"
+    ],
+    "common_problems": [
+      {
+        "title": "Fridge or freezer is not cold enough",
+        "description": "Food compartments feel warmer than expected or temperatures vary through the day."
+      },
+      {
+        "title": "Excess frost or ice build-up",
+        "description": "Ice collects around the freezer compartment, vents or door area."
+      },
+      {
+        "title": "Water pooling nearby",
+        "description": "Water appears inside the cabinet, under a drawer or on the floor near the appliance."
+      },
+      {
+        "title": "Clicking, buzzing or no power",
+        "description": "Share when the sound occurs and whether the display, lights or cooling have changed."
+      }
+    ],
+    "inspection_scope": [
+      "Review the appliance type, model label and the symptoms you have noticed.",
+      "Check accessible controls, airflow paths, door seals and visible connections as appropriate.",
+      "Explain inspection findings and separate recommended parts from labour in a proposed estimate.",
+      "Request approval before any work outside the agreed scope is started."
+    ],
+    "questions": [
+      {
+        "question": "What details help describe a cooling problem?",
+        "answer": "Note which compartment is affected, when the issue began, any unusual sounds, and whether the door was left open or power was interrupted. These details do not replace an inspection."
+      },
+      {
+        "question": "Can I keep using a refrigerator that is making a new sound?",
+        "answer": "Some operating sounds are normal, but a sudden or persistent change can be worth checking. If you notice smoke, a burning smell or damaged wiring, stop using it if safe and seek qualified help."
+      },
+      {
+        "question": "Will replacement parts be included in the first estimate?",
+        "answer": "A part should be identified and listed separately when it is known. If diagnosis reveals additional work, the proposed change should be explained for your approval first."
+      }
+    ],
+    "related_service_slugs": [
+      "washing-machine-repair",
+      "ac-repair",
+      "ro-repair"
+    ],
+    "category_slug": "appliance-repair"
+  },
+  {
+    "slug": "washing-machine-repair",
+    "title": "Washing Machine Repair",
+    "home_title": "Washing machine repair",
+    "home_description": "Cycles, spin and drain",
+    "description": "Find common washer and spin-cycle symptoms, learn what a service inspection may cover, and see how a proposed repair can be itemised.",
+    "listing_description": "Drain, spin, fill, vibration and leak concerns for common washing-machine types.",
+    "keywords": [
+      "washer",
+      "laundry",
+      "not draining",
+      "not spinning",
+      "front load",
+      "top load"
+    ],
+    "common_problems": [
+      {
+        "title": "Water does not drain",
+        "description": "Water remains in the drum after a cycle or the machine pauses before spinning."
+      },
+      {
+        "title": "Drum will not spin",
+        "description": "A cycle completes without a normal spin, or clothes remain unusually wet."
+      },
+      {
+        "title": "Excessive movement or noise",
+        "description": "The machine vibrates, knocks or shifts position more than expected during a cycle."
+      },
+      {
+        "title": "Leaking or not filling",
+        "description": "Water appears around a hose or door, or the drum does not fill as expected."
+      }
+    ],
+    "inspection_scope": [
+      "Confirm the washer type, visible error code and the point in the cycle where the issue occurs.",
+      "Inspect accessible hoses, drainage points, levelling and user controls as appropriate.",
+      "Explain the likely scope and distinguish labour from any proposed replacement parts.",
+      "Document the agreed work and ask before proceeding with any additional repair."
+    ],
+    "questions": [
+      {
+        "question": "What should I note before a washing-machine inspection?",
+        "answer": "If safe, note the cycle, load size, any displayed error code, and whether the issue occurs while filling, washing, draining or spinning. Do not remove panels or reach into a powered appliance."
+      },
+      {
+        "question": "Could an unbalanced load cause vibration?",
+        "answer": "An uneven load or an unlevel machine can contribute to movement, but other causes are possible. Follow the appliance manual and share when the vibration happens."
+      },
+      {
+        "question": "Are hoses and parts included in a repair estimate?",
+        "answer": "The estimate should make clear what inspection and labour cover, and list any proposed parts separately when applicable. Additional work should be presented for approval."
+      }
+    ],
+    "related_service_slugs": [
+      "plumbing",
+      "refrigerator-repair",
+      "electrical"
+    ],
+    "category_slug": "appliance-repair"
+  },
+  {
+    "slug": "ro-repair",
+    "title": "RO Water Purifier Repair",
+    "home_title": "RO repair",
+    "home_description": "Water purifier systems",
+    "description": "Learn about common water-purifier symptoms and the checks a technician may discuss, without treating a symptom as a confirmed diagnosis.",
+    "listing_description": "Low water flow, unusual taste, leaks and indicator issues for RO water purifiers.",
+    "keywords": [
+      "ro",
+      "water purifier",
+      "water filter",
+      "purifier",
+      "low flow",
+      "taste"
+    ],
+    "common_problems": [
+      {
+        "title": "Low or no water flow",
+        "description": "The purifier dispenses more slowly than usual or does not fill its storage tank."
+      },
+      {
+        "title": "Change in taste or odour",
+        "description": "Water tastes or smells different; the cause cannot be determined from taste alone."
+      },
+      {
+        "title": "Leak near the purifier",
+        "description": "Moisture appears at a connection, tap, tank or beneath the unit."
+      },
+      {
+        "title": "Indicator, pump or sound concern",
+        "description": "A light, pump cycle or operating sound changes compared with normal use."
+      }
+    ],
+    "inspection_scope": [
+      "Discuss the purifier model, filter-service history and the symptoms reported.",
+      "Inspect accessible tubing, connectors, tap, storage tank and indicators as appropriate.",
+      "Explain which components may need attention and list proposed consumables or parts clearly.",
+      "Confirm the scope with the customer before changing filters or performing additional work."
+    ],
+    "questions": [
+      {
+        "question": "Does a taste change prove that an RO filter needs replacement?",
+        "answer": "No. Taste or odour alone cannot verify water quality or identify a component failure. Follow the purifier manual and seek an appropriate inspection or water-quality test where needed."
+      },
+      {
+        "question": "What information should I share about my purifier?",
+        "answer": "The brand and model, any indicator lights, approximate filter-service history, and when flow or taste changed can help frame the conversation."
+      },
+      {
+        "question": "Will filter costs be shown separately?",
+        "answer": "A transparent estimate should identify proposed filter or other parts separately from inspection and labour, where applicable, before you decide."
+      }
+    ],
+    "related_service_slugs": [
+      "plumbing",
+      "electrical",
+      "refrigerator-repair"
+    ],
+    "category_slug": "appliance-repair"
+  },
+  {
+    "slug": "electrical",
+    "title": "Electrical Services",
+    "home_title": "Electrical services",
+    "home_description": "Switches and wiring",
+    "description": "Review common household electrical concerns and understand how a qualified professional may inspect the affected circuit or fitting.",
+    "listing_description": "Switches, sockets, lighting and circuit concerns that call for careful assessment.",
+    "keywords": [
+      "electrician",
+      "wiring",
+      "switch",
+      "socket",
+      "outlet",
+      "circuit breaker",
+      "flicker"
+    ],
+    "common_problems": [
+      {
+        "title": "Breaker trips repeatedly",
+        "description": "A circuit switches off more than once or trips when a particular appliance is used."
+      },
+      {
+        "title": "Flickering or dim lights",
+        "description": "One light or several lights flicker, dim or behave differently than usual."
+      },
+      {
+        "title": "Switch or socket is not working",
+        "description": "A fitting has no power, feels loose or has visible damage."
+      },
+      {
+        "title": "Heat, sparks or burning smell",
+        "description": "A potentially urgent warning sign around a fitting or electrical device."
+      }
+    ],
+    "inspection_scope": [
+      "Discuss which fitting or circuit is affected and any visible warning signs.",
+      "Inspect the relevant accessible switch, socket, light or circuit using appropriate safety steps.",
+      "Explain findings and separate diagnostic work, labour and any proposed components.",
+      "Describe additional work and obtain customer approval before proceeding."
+    ],
+    "questions": [
+      {
+        "question": "What should I do if a socket smells burnt or sparks?",
+        "answer": "Do not touch a damaged fitting. If it is safe to do so, stop using the affected circuit and seek a qualified electrician promptly. In an immediate emergency, follow local emergency guidance."
+      },
+      {
+        "question": "Can repeated breaker trips be ignored?",
+        "answer": "Repeated trips can indicate a problem and should not be bypassed. Avoid repeatedly resetting a breaker and arrange a qualified assessment."
+      },
+      {
+        "question": "Will an electrical estimate list materials separately?",
+        "answer": "A clear proposal should describe the inspection, labour and any identified materials or fittings separately where practical, with scope changes explained for approval."
+      }
+    ],
+    "related_service_slugs": [
+      "ac-repair",
+      "plumbing",
+      "ro-repair"
+    ],
+    "category_slug": "home-systems"
+  },
+  {
+    "slug": "plumbing",
+    "title": "Plumbing Services",
+    "home_title": "Plumbing",
+    "home_description": "Pipes, taps and leaks",
+    "description": "Explore everyday leak, drainage and water-flow concerns, plus the details a plumber may need before outlining a repair scope.",
+    "listing_description": "Leaks, taps, drains, water pressure and other common household plumbing concerns.",
+    "keywords": [
+      "plumber",
+      "pipe",
+      "leak",
+      "tap",
+      "drain",
+      "clog",
+      "water pressure"
+    ],
+    "common_problems": [
+      {
+        "title": "Tap or pipe is leaking",
+        "description": "Water drips from a tap, connection or visible pipe, sometimes only while in use."
+      },
+      {
+        "title": "Slow or blocked drain",
+        "description": "Water drains slowly, backs up or leaves an unfamiliar odour near a fixture."
+      },
+      {
+        "title": "Low or uneven water pressure",
+        "description": "One fixture or several fixtures have a noticeable change in water flow."
+      },
+      {
+        "title": "Toilet keeps running",
+        "description": "The cistern continues to refill or water continues to move after flushing."
+      }
+    ],
+    "inspection_scope": [
+      "Identify the affected fixture, when the issue occurs and whether water is still escaping.",
+      "Inspect accessible taps, traps, visible pipework and connections as appropriate.",
+      "Explain the proposed repair and distinguish labour from any materials or replacement parts.",
+      "Confirm customer approval before expanding the agreed scope or starting extra work."
+    ],
+    "questions": [
+      {
+        "question": "What information helps with a leak report?",
+        "answer": "Share where the water appears, when it happens, whether the source is visible and what fixtures are affected. If safe, turn off the relevant water supply while arranging help."
+      },
+      {
+        "question": "Can every slow drain be cleared with a household chemical?",
+        "answer": "Not necessarily. Follow product and fixture guidance; mixing chemicals or using them on an unknown blockage can be hazardous. Describe the symptoms and seek an appropriate assessment."
+      },
+      {
+        "question": "Will extra materials be charged without asking?",
+        "answer": "FixNear is being designed so proposed materials and scope changes are explained for customer approval before additional work proceeds."
+      }
+    ],
+    "related_service_slugs": [
+      "ro-repair",
+      "washing-machine-repair",
+      "electrical"
+    ],
+    "category_slug": "home-systems"
+  }
+]
