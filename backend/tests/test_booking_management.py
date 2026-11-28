@@ -561,8 +561,8 @@ def test_admin_assignment_checks_active_approved_skill_and_exact_coverage_and_re
         json={"decision": "accept"},
         headers={"Idempotency-Key": str(uuid4())},
     )
-    assert unauthorized.status_code == 409
-    assert client.get("/api/v1/technician/bookings").json()["items"] == []
+    assert unauthorized.status_code == 403
+    assert client.get("/api/v1/technician/bookings").status_code == 403
 
     _set_actor(identity_holder, eligible)
     accepted = client.post(
@@ -1485,6 +1485,8 @@ def test_visit_eta_updates_are_visit_scoped_manual_and_tracking_is_unavailable(
     assert scheduled.status_code == 200, scheduled.text
     assert scheduled.json()["status"] == "scheduled"
     assert scheduled.json()["live_tracking_status"] == "unavailable"
+    assert scheduled.json()["eta_source"] == "technician_manual"
+    assert scheduled.json()["eta_updated_at"] is not None
     visit_id = scheduled.json()["id"]
 
     _set_actor(identity_holder, admin)
@@ -1497,6 +1499,8 @@ def test_visit_eta_updates_are_visit_scoped_manual_and_tracking_is_unavailable(
     )
     assert admin_scheduled.status_code == 200, admin_scheduled.text
     assert admin_scheduled.json()["id"] == visit_id
+    assert admin_scheduled.json()["eta_source"] == "admin_manual"
+    assert admin_scheduled.json()["eta_updated_at"] is not None
     assert admin_scheduled.json()["updated_by_user_id"] == str(admin.id)
     replay = client.put(
         f"/api/v1/admin/bookings/{booking_id}/visit",

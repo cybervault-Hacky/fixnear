@@ -19,6 +19,8 @@ class NearbyTechnicianSearchRequest(BaseModel):
     latitude: Annotated[float, Field(ge=-90, le=90)] | None = None
     longitude: Annotated[float, Field(ge=-180, le=180)] | None = None
     radius_km: Annotated[float, Field(gt=0, le=100)] = 25
+    limit: Annotated[int, Field(ge=1, le=100)] = 25
+    offset: Annotated[int, Field(ge=0, le=100000)] = 0
 
     @model_validator(mode="after")
     def validate_location_mode(self):
@@ -67,6 +69,8 @@ class NearbyTechnicianListResponse(BaseModel):
     service_slug: str
     results: list[NearbyTechnicianResponse]
     total: int
+    limit: int
+    offset: int
     sort: Literal["distance", "service_area"]
     location_mode: Literal["coordinates", "manual_area"]
     note: str

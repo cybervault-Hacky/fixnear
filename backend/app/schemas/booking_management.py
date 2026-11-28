@@ -137,6 +137,7 @@ class BookingCreateRequest(BaseModel):
     service_slug: Annotated[
         str, Field(min_length=1, max_length=80, pattern=r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
     ]
+    appliance_id: UUID | None = None
     address_id: UUID | None = None
     new_address: CustomerAddressInput | None = None
     save_new_address: bool = False
@@ -328,9 +329,17 @@ class BookingVisitResponse(BaseModel):
     booking_id: UUID
     status: VisitStatus
     eta_at: datetime | None
+    eta_source: Literal["technician_manual", "admin_manual"] | None = None
+    eta_updated_at: datetime | None = None
     updated_by_user_id: UUID | None
     updated_at: datetime
     live_tracking_status: Literal["unavailable"] = "unavailable"
+
+    @model_validator(mode="after")
+    def hide_unattributed_eta(self):
+        if self.eta_source is None or self.eta_updated_at is None:
+            self.eta_at = None
+        return self
 
 
 class BookingAddressSnapshotResponse(BaseModel):
@@ -352,6 +361,7 @@ class BookingSummaryResponse(BaseModel):
     id: UUID
     service_slug: str
     service_title: str
+    appliance_id: UUID | None = None
     status: BookingStatus
     preferred_date: date
     preferred_start: time

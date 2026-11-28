@@ -67,6 +67,8 @@ def read_nearby_technicians(
             latitude=request.latitude,
             longitude=request.longitude,
             radius_km=request.radius_km,
+            limit=request.limit,
+            offset=request.offset,
         )
     )
 

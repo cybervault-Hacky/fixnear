@@ -65,6 +65,7 @@ def grant_role(
     actor: AppUser,
     subject_id: UUID,
     role_code: RoleCode,
+    reason: str,
 ) -> AdminManagedUserResponse:
     role = (
         _lock_admin_catalog_row(session)
@@ -87,6 +88,7 @@ def grant_role(
                 action='role.granted',
                 before_value=None,
                 after_value=role_code.value,
+                reason=reason,
             )
         )
         session.flush()
@@ -100,6 +102,7 @@ def revoke_role(
     actor: AppUser,
     subject_id: UUID,
     role_code: RoleCode,
+    reason: str,
 ) -> AdminManagedUserResponse:
     role = (
         _lock_admin_catalog_row(session)
@@ -133,6 +136,7 @@ def revoke_role(
                 action='role.revoked',
                 before_value=role_code.value,
                 after_value='revoked',
+                reason=reason,
             )
         )
         session.flush()
@@ -146,6 +150,7 @@ def change_user_status(
     actor: AppUser,
     subject_id: UUID,
     new_status: AccountStatus,
+    reason: str,
 ) -> AdminManagedUserResponse:
     # Serialize status changes against every grant/revoke of the admin role. The lock is
     # intentionally acquired before reading the target so concurrent updates see fresh state.
@@ -169,6 +174,15 @@ def change_user_status(
                 },
             )
 
+        if actor.id == subject.id and new_status is not AccountStatus.ACTIVE:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail={
+                    'code': 'cannot_suspend_self',
+                    'message': 'You cannot suspend your own account.',
+                },
+            )
+
         subject.status = new_status.value
         session.add(
             UserAuditEvent(
@@ -177,6 +191,7 @@ def change_user_status(
                 action='status.changed',
                 before_value=previous_status.value,
                 after_value=new_status.value,
+                reason=reason,
             )
         )
         session.flush()

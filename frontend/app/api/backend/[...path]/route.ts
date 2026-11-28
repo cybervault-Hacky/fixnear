@@ -1,3 +1,4 @@
+import { getEffectiveOrigin } from '../../../../host-policy.mjs';
 import { timingSafeEqual } from 'node:crypto';
 
 export const dynamic = 'force-dynamic';
@@ -72,33 +73,11 @@ function readCookie(request: Request, cookieName: string): string | null {
   return null;
 }
 
-function getRequestOrigin(request: Request): string | null {
-  try {
-    const forwardedHost = request.headers.get('x-forwarded-host')?.split(',')[0]?.trim();
-    const host = forwardedHost || request.headers.get('host')?.trim();
-    const forwardedProtocol = request.headers
-      .get('x-forwarded-proto')
-      ?.split(',')[0]
-      ?.trim()
-      .toLowerCase();
-    const fallback = new URL(request.url);
-    const protocol = forwardedProtocol ? `${forwardedProtocol}:` : fallback.protocol;
-    if (host && ['http:', 'https:'].includes(protocol)) {
-      const candidate = new URL(`${protocol}//${host}`);
-      if (!candidate.username && !candidate.password) return candidate.origin;
-      return null;
-    }
-    return fallback.origin;
-  } catch {
-    return null;
-  }
-}
-
 function hasValidCsrf(request: Request): boolean {
   const origin = request.headers.get('origin');
   const fetchSite = request.headers.get('sec-fetch-site');
   if (!origin || fetchSite === 'cross-site') return false;
-  const requestOrigin = getRequestOrigin(request);
+  const requestOrigin = getEffectiveOrigin(request);
   if (!requestOrigin || origin !== requestOrigin) return false;
 
   const csrfCookie = readCookie(request, backendCookieNames().csrf);

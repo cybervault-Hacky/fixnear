@@ -9,8 +9,8 @@ from sqlalchemy.orm import Session
 
 from app.auth.authorization import (
     require_admin_role,
+    require_approved_technician,
     require_customer_role,
-    require_technician_role,
 )
 from app.db.session import get_db_session
 from app.models import AppUser, Booking, BookingVisit
@@ -67,7 +67,7 @@ technician_router = APIRouter(prefix='/technician/bookings', tags=['technician b
 admin_router = APIRouter(prefix='/admin/bookings', tags=['admin bookings'])
 DatabaseSession = Annotated[Session, Depends(get_db_session)]
 CustomerActor = Annotated[AppUser, Depends(require_customer_role)]
-TechnicianActor = Annotated[AppUser, Depends(require_technician_role)]
+TechnicianActor = Annotated[AppUser, Depends(require_approved_technician)]
 AdminActor = Annotated[AppUser, Depends(require_admin_role)]
 IdempotencyKey = Annotated[UUID, Header(alias='Idempotency-Key')]
 

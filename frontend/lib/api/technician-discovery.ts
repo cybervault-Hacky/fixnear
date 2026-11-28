@@ -22,6 +22,8 @@ export type NearbyTechnicianList = {
   service_slug: string;
   results: NearbyTechnician[];
   total: number;
+  limit: number;
+  offset: number;
   sort: 'distance' | 'service_area';
   location_mode: 'coordinates' | 'manual_area';
   note: string;
@@ -29,12 +31,16 @@ export type NearbyTechnicianList = {
 
 export type NearbyLocationSearch =
   | {
+      limit?: number;
+      offset?: number;
       mode: 'coordinates';
       latitude: number;
       longitude: number;
       radius_km: number;
     }
   | {
+      limit?: number;
+      offset?: number;
       mode: 'manual_area';
       area?: string;
       city?: string;
@@ -68,6 +74,8 @@ export async function findNearbyTechnicians(serviceSlug: string, location: Nearb
       ? location
       : {
           mode: location.mode,
+          ...(location.limit !== undefined ? { limit: location.limit } : {}),
+          ...(location.offset !== undefined ? { offset: location.offset } : {}),
           ...(location.area?.trim() ? { area: location.area.trim() } : {}),
           ...(location.city?.trim() ? { city: location.city.trim() } : {}),
           ...(location.state?.trim() ? { state: location.state.trim() } : {}),

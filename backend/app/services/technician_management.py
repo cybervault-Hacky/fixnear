@@ -7,7 +7,7 @@ from uuid import UUID
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from fastapi import HTTPException, status
-from sqlalchemy import delete, select
+from sqlalchemy import delete, or_, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.models import (
@@ -416,6 +416,7 @@ def _admin_technician_payload(session: Session, profile: TechnicianProfile) -> d
         'professional_description': profile.professional_description,
         'years_experience': profile.years_experience,
         'onboarding_status': profile.onboarding_status,
+        'account_status': user.status if user else None,
         'verification_status': profile.verification_status,
         'verification_submitted_at': profile.verification_submitted_at,
         'verification_reviewed_at': profile.verification_reviewed_at,
@@ -430,16 +431,29 @@ def list_admin_technicians(
     session: Session,
     *,
     verification_status: str | None = None,
+    search: str | None = None,
+    account_status: str | None = None,
 ) -> list[dict[str, object]]:
     statement = (
         select(TechnicianProfile)
         .join(UserRole, UserRole.user_id == TechnicianProfile.user_id)
+        .join(AppUser, AppUser.id == TechnicianProfile.user_id)
         .where(UserRole.role_code == RoleCode.TECHNICIAN.value)
         .options(selectinload(TechnicianProfile.user))
         .order_by(TechnicianProfile.created_at, TechnicianProfile.user_id)
     )
     if verification_status:
         statement = statement.where(TechnicianProfile.verification_status == verification_status)
+    if account_status:
+        statement = statement.where(AppUser.status == account_status)
+    if search:
+        pattern = f"%{search.strip()}%"
+        statement = statement.where(
+            or_(
+                AppUser.email.ilike(pattern),
+                TechnicianProfile.display_name.ilike(pattern),
+            )
+        )
     profiles = session.scalars(statement).unique().all()
     return [_admin_technician_payload(session, profile) for profile in profiles]
 

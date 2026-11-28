@@ -132,6 +132,10 @@ def test_only_health_and_explicit_public_catalog_discovery_reads_are_anonymous()
         for operation in methods.values():
             if path in public_paths:
                 assert operation.get("security") is None
+            elif path == "/api/v1/webhooks/mock-payment":
+                # Machine callback uses timestamped HMAC, not browser bearer auth.
+                required = {item["name"] for item in operation.get("parameters", []) if item.get("required")}
+                assert {"X-Mock-Timestamp", "X-Mock-Signature"} <= required
             else:
                 assert {"HTTPBearer": []} in operation.get("security", [])
 
@@ -313,11 +317,17 @@ def test_admin_role_and_status_changes_are_audited_and_idempotent(
     )
     identity_holder["value"] = identity_for(admin.auth_subject)
 
-    grant = client.put(f"/api/v1/admin/users/{target.id}/roles/technician")
+    grant = client.put(
+        f"/api/v1/admin/users/{target.id}/roles/technician",
+        json={"reason": "Granting technician role after verified onboarding review."},
+    )
     assert grant.status_code == 200
     assert grant.json()["role_codes"] == ["customer", "technician"]
 
-    repeat_grant = client.put(f"/api/v1/admin/users/{target.id}/roles/technician")
+    repeat_grant = client.put(
+        f"/api/v1/admin/users/{target.id}/roles/technician",
+        json={"reason": "Granting technician role after verified onboarding review."},
+    )
     assert repeat_grant.status_code == 200
     assert (
         session.scalar(
@@ -345,21 +355,21 @@ def test_admin_role_and_status_changes_are_audited_and_idempotent(
 
     rejected_status = client.patch(
         f"/api/v1/admin/users/{target.id}/status",
-        json={"status": "suspended", "role": "admin"},
+        json={"status": "suspended", "role": "admin", "reason": "Attempt to smuggle an admin role field."},
     )
     assert rejected_status.status_code == 422
     assert session.get(AppUser, target.id).status == "active"
 
     status_change = client.patch(
         f"/api/v1/admin/users/{target.id}/status",
-        json={"status": "suspended"},
+        json={"status": "suspended", "reason": "Customer requested account pause for abuse investigation."},
     )
     assert status_change.status_code == 200
     assert status_change.json()["account_status"] == "suspended"
     assert (
         client.patch(
             f"/api/v1/admin/users/{target.id}/status",
-            json={"status": "suspended"},
+            json={"status": "suspended", "reason": "Customer requested account pause for abuse investigation."},
         ).status_code
         == 200
     )
@@ -374,11 +384,19 @@ def test_admin_role_and_status_changes_are_audited_and_idempotent(
     assert status_events[0].before_value == "active"
     assert status_events[0].after_value == "suspended"
 
-    revoke = client.delete(f"/api/v1/admin/users/{target.id}/roles/technician")
+    revoke = client.request(
+        "DELETE",
+        f"/api/v1/admin/users/{target.id}/roles/technician",
+        json={"reason": "Technician failed re-verification during quarterly review."},
+    )
     assert revoke.status_code == 200
     assert revoke.json()["role_codes"] == ["customer"]
     assert (
-        client.delete(f"/api/v1/admin/users/{target.id}/roles/technician").status_code
+        client.request(
+            "DELETE",
+            f"/api/v1/admin/users/{target.id}/roles/technician",
+            json={"reason": "Technician failed re-verification during quarterly review."},
+        ).status_code
         == 200
     )
     role_events = session.scalars(
@@ -407,17 +425,20 @@ def test_non_admin_cannot_manage_users_and_body_cannot_assign_privilege(
     )
     target = create_user(session)
 
-    grant = client.put(f"/api/v1/admin/users/{target.id}/roles/admin")
+    grant = client.put(
+        f"/api/v1/admin/users/{target.id}/roles/admin",
+        json={"reason": "Attempting privilege escalation without being an admin."},
+    )
     assert grant.status_code == 403
     status_change = client.patch(
         f"/api/v1/admin/users/{target.id}/status",
-        json={"status": "disabled"},
+        json={"status": "disabled", "reason": "Attempting to disable an account without authorization."},
     )
     assert status_change.status_code == 403
     assert (
         client.patch(
             f"/api/v1/admin/users/{target.id}/status",
-            json={"status": "active", "role": "admin"},
+            json={"status": "active", "role": "admin", "reason": "Attempting to smuggle an admin role field."},
         ).status_code
         == 403
     )
@@ -443,7 +464,10 @@ def test_disabled_admin_cannot_perform_admin_mutations(authenticated_client) -> 
     target = create_user(session)
     identity_holder["value"] = identity_for(inactive_admin.auth_subject)
 
-    grant = client.put(f"/api/v1/admin/users/{target.id}/roles/admin")
+    grant = client.put(
+        f"/api/v1/admin/users/{target.id}/roles/admin",
+        json={"reason": "Attempting privilege escalation without being an admin."},
+    )
 
     assert grant.status_code == 403
     assert session.get(UserRole, (target.id, "admin")) is None
@@ -477,7 +501,10 @@ def test_admin_mutation_and_audit_event_roll_back_together_on_audit_failure(
     )
     session.commit()
 
-    response = client.put(f"/api/v1/admin/users/{target.id}/roles/technician")
+    response = client.put(
+        f"/api/v1/admin/users/{target.id}/roles/technician",
+        json={"reason": "Investigating rollback behavior on audit insertion failure."},
+    )
 
     assert response.status_code == 500
     assert response.json() == {"detail": "Internal server error"}
@@ -501,11 +528,15 @@ def test_last_active_admin_cannot_remove_its_own_role_or_disable_itself(
         role_codes=("admin",),
     )
 
-    revoke = client.delete(f"/api/v1/admin/users/{admin.id}/roles/admin")
+    revoke = client.request(
+        "DELETE",
+        f"/api/v1/admin/users/{admin.id}/roles/admin",
+        json={"reason": "Attempting to revoke the only remaining admin role."},
+    )
     assert revoke.status_code == 409
     suspend = client.patch(
         f"/api/v1/admin/users/{admin.id}/status",
-        json={"status": "suspended"},
+        json={"status": "suspended", "reason": "Attempting to suspend the only remaining admin."},
     )
     assert suspend.status_code == 409
 

@@ -4,11 +4,15 @@ import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import {
   ArrowUpRight,
   ClipboardList,
+  FileText,
   House,
+  LifeBuoy,
   LayoutDashboard,
   MapPinned,
   Menu,
+  NotebookTabs,
   ShieldCheck,
+  Star,
   UserRound,
   X,
 } from 'lucide-react';
@@ -21,6 +25,17 @@ import { Brand } from '@/components/shared/Brand';
 import { DemoDataNotice } from '@/features/dashboard/components/DemoDataNotice';
 import { useDashboardDemo } from '@/features/dashboard/context/DashboardDemoContext';
 
+const accountLinkedPrefixes = [
+  '/dashboard/homepassport',
+  '/dashboard/warranties',
+  '/dashboard/claims',
+  '/dashboard/documents',
+  '/dashboard/support',
+  '/dashboard/reviews',
+  '/dashboard/notifications',
+  '/dashboard/simulated-payments',
+] as const;
+
 const dashboardLinks = [
   { label: 'Overview', href: '/dashboard', icon: LayoutDashboard },
   { label: 'Profile', href: '/dashboard/profile', icon: UserRound },
@@ -28,6 +43,12 @@ const dashboardLinks = [
   { label: 'Service activity', href: '/dashboard/activity', icon: ClipboardList },
   { label: 'HomePassport', href: '/dashboard/homepassport', icon: House },
   { label: 'Warranties', href: '/dashboard/warranties', icon: ShieldCheck },
+  { label: 'Claims', href: '/dashboard/claims', icon: NotebookTabs },
+  { label: 'Documents', href: '/dashboard/documents', icon: FileText },
+  { label: 'My reviews', href: '/dashboard/reviews', icon: Star },
+  { label: 'Simulated payments', href: '/dashboard/simulated-payments', icon: ClipboardList },
+  { label: 'Notifications', href: '/dashboard/notifications', icon: ClipboardList },
+  { label: 'Support', href: '/dashboard/support', icon: LifeBuoy },
 ] as const;
 
 type DashboardShellProps = {
@@ -98,6 +119,10 @@ export function DashboardShell({ children }: DashboardShellProps) {
 
   const closeMobileNavigation = () => setMobileOpen(false);
 
+  const accountLinked = accountLinkedPrefixes.some(
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
+  );
+
   return (
     <div className="min-h-screen bg-[#f8faf7] text-midnight">
       <a href="#dashboard-main" className="skip-link">
@@ -115,11 +140,32 @@ export function DashboardShell({ children }: DashboardShellProps) {
             <DashboardNavigation pathname={pathname} label="Customer dashboard" />
           </div>
           <div className="mt-auto rounded-2xl border border-midnight/10 bg-[#f8faf7] p-4">
-            <p className="text-[0.65rem] font-semibold uppercase tracking-[0.12em] text-midnight/45">
-              Demo profile
-            </p>
-            <p className="mt-2 truncate text-sm font-semibold text-midnight">{profile.fullName}</p>
-            <p className="mt-1 text-xs leading-5 text-midnight/55">Session-only sample details</p>
+            {accountLinked ? (
+              <>
+                <p className="text-[0.65rem] font-semibold uppercase tracking-[0.12em] text-midnight/45">
+                  Account-linked
+                </p>
+                <p className="mt-2 text-sm font-semibold text-midnight">
+                  Records from your FixNear account
+                </p>
+                <p className="mt-1 text-xs leading-5 text-midnight/55">
+                  HomePassport, warranties, claims and documents use your session. Profile,
+                  addresses and activity examples remain session-only.
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="text-[0.65rem] font-semibold uppercase tracking-[0.12em] text-midnight/45">
+                  Demo profile
+                </p>
+                <p className="mt-2 truncate text-sm font-semibold text-midnight">
+                  {profile.fullName}
+                </p>
+                <p className="mt-1 text-xs leading-5 text-midnight/55">
+                  Session-only sample details
+                </p>
+              </>
+            )}
             <Link
               href="/"
               className="mt-3 inline-flex min-h-10 items-center gap-1.5 rounded-lg text-xs font-semibold text-midnight/70 underline decoration-midnight/20 underline-offset-4 hover:text-midnight focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-midnight"
@@ -159,10 +205,17 @@ export function DashboardShell({ children }: DashboardShellProps) {
               </p>
             </div>
             <div className="flex items-center gap-4">
-              <span className="inline-flex items-center gap-2 rounded-full border border-midnight/10 bg-[#f8faf7] px-3 py-2 text-xs font-medium text-midnight/65">
-                <span aria-hidden="true" className="size-2 rounded-full bg-lime" />
-                Local demo
-              </span>
+              {accountLinked ? (
+                <span className="inline-flex items-center gap-2 rounded-full border border-midnight/10 bg-[#f8faf7] px-3 py-2 text-xs font-medium text-midnight/65">
+                  <span aria-hidden="true" className="size-2 rounded-full bg-lime" />
+                  Account session
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-2 rounded-full border border-midnight/10 bg-[#f8faf7] px-3 py-2 text-xs font-medium text-midnight/65">
+                  <span aria-hidden="true" className="size-2 rounded-full bg-lime" />
+                  Local demo
+                </span>
+              )}
               <Link
                 href="/services"
                 className="inline-flex min-h-11 items-center gap-2 rounded-xl px-3 text-sm font-semibold text-midnight/70 transition-colors hover:bg-midnight/[0.05] hover:text-midnight focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-midnight motion-reduce:transition-none"
@@ -177,12 +230,14 @@ export function DashboardShell({ children }: DashboardShellProps) {
             tabIndex={-1}
             className="mx-auto w-full max-w-[1540px] px-4 py-6 outline-none sm:px-6 sm:py-8 lg:px-8 lg:py-10 xl:px-10"
           >
-            <DemoDataNotice />
+            {accountLinked ? null : <DemoDataNotice />}
             {children}
           </main>
 
           <footer className="border-t border-midnight/8 bg-white px-4 py-5 text-center text-xs leading-5 text-midnight/50 sm:px-6 lg:px-8">
-            FixNear demo workspace · No real account, address or service record is connected.
+            {accountLinked
+              ? 'HomePassport, warranties, claims and documents are connected to your FixNear account. Other dashboard sections remain session-only samples.'
+              : 'FixNear demo workspace · Profile, addresses and activity examples are not connected to an account.'}
           </footer>
         </div>
       </div>

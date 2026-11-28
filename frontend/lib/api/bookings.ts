@@ -118,6 +118,8 @@ export type BookingVisit = {
   booking_id: string;
   status: BookingVisitStatus;
   eta_at: string | null;
+  eta_source?: 'technician_manual' | 'admin_manual' | null;
+  eta_updated_at?: string | null;
   updated_by_user_id: string | null;
   updated_at: string;
   live_tracking_status: 'unavailable';

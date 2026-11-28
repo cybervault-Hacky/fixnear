@@ -39,6 +39,7 @@ class TechnicianProfileResponse(BaseModel):
     professional_description: str
     years_experience: int | None
     onboarding_status: OnboardingStatus
+    account_status: Literal['pending', 'active', 'suspended', 'disabled'] | None = None
     verification_status: VerificationStatus
     verification_submitted_at: datetime | None
     verification_reviewed_at: datetime | None

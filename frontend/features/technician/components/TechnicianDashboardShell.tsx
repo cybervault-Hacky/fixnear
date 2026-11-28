@@ -12,6 +12,7 @@ import {
   MapPinned,
   Menu,
   ShieldCheck,
+  Star,
   UserRound,
   Wrench,
   X,
@@ -34,8 +35,10 @@ const technicianLinks = [
   { label: 'Service coverage', href: '/technician/coverage', icon: MapPinned },
   { label: 'Availability', href: '/technician/availability', icon: CalendarDays },
   { label: 'Bookings & quotes', href: '/technician/bookings', icon: ClipboardList },
+  { label: 'Notifications', href: '/technician/notifications', icon: ClipboardList },
   { label: 'Work history', href: '/technician/jobs', icon: BriefcaseBusiness },
   { label: 'Earnings overview', href: '/technician/earnings', icon: BarChart3 },
+  { label: 'Reviews', href: '/technician/reviews', icon: Star },
   { label: 'Verification stages', href: '/technician/verification', icon: ShieldCheck },
   { label: 'Database management', href: '/technician/manage', icon: Database },
 ] as const;

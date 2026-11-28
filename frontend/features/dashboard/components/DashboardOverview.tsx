@@ -1,6 +1,14 @@
 'use client';
 
-import { ArrowRight, ClipboardList, House, MapPinned, ShieldCheck, UserRound } from 'lucide-react';
+import {
+  ArrowRight,
+  ClipboardList,
+  House,
+  MapPinned,
+  NotebookTabs,
+  ShieldCheck,
+  UserRound,
+} from 'lucide-react';
 import Link from 'next/link';
 
 import { Button } from '@/components/ui/Button';
@@ -8,13 +16,7 @@ import { DashboardCard } from '@/features/dashboard/components/DashboardCard';
 import { DashboardEmptyState } from '@/features/dashboard/components/DashboardEmptyState';
 import { DashboardPageHeader } from '@/features/dashboard/components/DashboardPageHeader';
 import { DemoActivityCard } from '@/features/dashboard/components/DemoActivityCard';
-import { DemoApplianceCard } from '@/features/dashboard/components/DemoApplianceCard';
-import { DemoWarrantyCard } from '@/features/dashboard/components/DemoWarrantyCard';
-import {
-  DEMO_ACTIVITY,
-  DEMO_APPLIANCES,
-  DEMO_WARRANTIES,
-} from '@/features/dashboard/data/demo-data';
+import { DEMO_ACTIVITY } from '@/features/dashboard/data/demo-data';
 import { useDashboardDemo } from '@/features/dashboard/context/DashboardDemoContext';
 
 const quickLinks = [
@@ -38,15 +40,27 @@ const quickLinks = [
   },
   {
     title: 'HomePassport',
-    description: 'View sample appliances and parts history.',
+    description: 'Real appliance records linked to your FixNear account.',
     href: '/dashboard/homepassport',
     icon: House,
   },
   {
     title: 'Warranties',
-    description: 'Review sample dates and provider-term notes.',
+    description: 'Warranty vault with statuses computed from recorded dates.',
     href: '/dashboard/warranties',
     icon: ShieldCheck,
+  },
+  {
+    title: 'Claims',
+    description: 'File warranty claims and follow their recorded status.',
+    href: '/dashboard/claims',
+    icon: ClipboardList,
+  },
+  {
+    title: 'Documents',
+    description: 'Private vault for invoices, certificates and receipts.',
+    href: '/dashboard/documents',
+    icon: NotebookTabs,
   },
 ] as const;
 
@@ -62,7 +76,7 @@ export function DashboardOverview() {
       <DashboardPageHeader
         eyebrow="Customer dashboard · demonstration"
         title={`Welcome, ${firstName}.`}
-        description="A single place to explore profile details, service activity, appliance records and warranty notes. Everything shown here is sample data, not a live customer account."
+        description="Profile and example activity below are session-only samples. HomePassport, warranties, claims and documents open the records linked to your FixNear account."
         action={
           <Button href="/dashboard/profile" variant="secondary" size="small">
             Edit demo profile <ArrowRight aria-hidden="true" size={15} />
@@ -90,18 +104,18 @@ export function DashboardOverview() {
         <SummaryTile
           icon={House}
           eyebrow="HomePassport"
-          title={`${DEMO_APPLIANCES.length} sample appliances`}
-          detail="Illustrative service and parts history."
+          title="Appliance records"
+          detail="Connected to your FixNear account."
           href="/dashboard/homepassport"
-          action="View examples"
+          action="Open HomePassport"
         />
         <SummaryTile
           icon={ShieldCheck}
-          eyebrow="Warranty notes"
-          title={`${DEMO_WARRANTIES.length} sample records`}
-          detail="Example dates do not confirm coverage."
+          eyebrow="Warranties"
+          title="Warranty vault"
+          detail="Statuses come from recorded dates and claims."
           href="/dashboard/warranties"
-          action="Review notes"
+          action="Open the vault"
         />
       </div>
 
@@ -162,8 +176,8 @@ export function DashboardOverview() {
 
       <div className="mt-5 grid items-start gap-5 xl:grid-cols-2">
         <DashboardCard
-          title="HomePassport preview"
-          description="Sample appliance entries with example purchase dates and histories."
+          title="HomePassport"
+          description="Appliance records connected to your FixNear account."
           icon={House}
           action={
             <Link className={linkClassName} href="/dashboard/homepassport">
@@ -171,46 +185,58 @@ export function DashboardOverview() {
             </Link>
           }
         >
-          <DashboardEmptyState
-            compact
-            icon={House}
-            title="No real appliances are stored"
-            description="These clearly marked demo cards are not customer-owned appliance records."
-          />
-          <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
-            {DEMO_APPLIANCES.map((appliance) => (
-              <DemoApplianceCard key={appliance.id} appliance={appliance} compact />
-            ))}
-          </div>
+          <p className="text-sm leading-6 text-midnight/70">
+            Track each appliance with its brand, model, optional serial and purchase details, plus
+            the service history your completed FixNear bookings add automatically. Entries you add
+            yourself are labelled unverified.
+          </p>
         </DashboardCard>
 
         <DashboardCard
-          title="Warranty summary"
-          description="Status colours are based on the demonstration dates shown."
+          title="Warranties, claims & documents"
+          description="Statuses are derived from recorded dates and claim state — never client input."
           icon={ShieldCheck}
           action={
             <Link className={linkClassName} href="/dashboard/warranties">
-              All warranty notes <ArrowRight aria-hidden="true" size={14} />
+              All warranties <ArrowRight aria-hidden="true" size={14} />
             </Link>
           }
         >
-          <DashboardEmptyState
-            compact
-            icon={ShieldCheck}
-            title="No live warranty information is connected"
-            description="The sample records below do not promise that any item is covered."
-          />
-          <div className="mt-4 grid gap-3">
-            {DEMO_WARRANTIES.map((warranty) => (
-              <DemoWarrantyCard key={warranty.id} warranty={warranty} compact />
-            ))}
-          </div>
+          <ul className="grid gap-2 text-sm leading-6 text-midnight/70">
+            <li>
+              <Link
+                className="font-semibold underline underline-offset-4 hover:text-midnight"
+                href="/dashboard/warranties"
+              >
+                Warranty vault
+              </Link>{' '}
+              — manufacturer, extended, service and part warranties.
+            </li>
+            <li>
+              <Link
+                className="font-semibold underline underline-offset-4 hover:text-midnight"
+                href="/dashboard/claims"
+              >
+                Claims
+              </Link>{' '}
+              — file claims and follow the recorded decision trail.
+            </li>
+            <li>
+              <Link
+                className="font-semibold underline underline-offset-4 hover:text-midnight"
+                href="/dashboard/documents"
+              >
+                Documents
+              </Link>{' '}
+              — private uploads of invoices, certificates and receipts when storage is configured.
+            </li>
+          </ul>
         </DashboardCard>
       </div>
 
       <DashboardCard
         title="Quick navigation"
-        description="Jump to a part of the customer workspace. Changes are session-only and are not persisted."
+        description="Jump to a part of the customer workspace. Profile, addresses and example activity are session-only; HomePassport, warranties, claims and documents use your account."
         className="mt-5"
         icon={ArrowRight}
       >

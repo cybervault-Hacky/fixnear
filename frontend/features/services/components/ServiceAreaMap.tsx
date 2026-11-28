@@ -1,12 +1,15 @@
 'use client';
 
 import Link from 'next/link';
-import type { ComponentType } from 'react';
+import { useState, type ComponentType } from 'react';
+
+import { LeafletCoverageMap } from '@/features/services/components/LeafletCoverageMap';
 
 import type { NearbyTechnician } from '@/lib/api/technician-discovery';
 
 export type ServiceAreaMapProps = {
   technicians: NearbyTechnician[];
+  customerLocation?: { latitude: number; longitude: number } | null;
 };
 
 /** Adapter contract for replacing the local schematic with a configured map SDK. */
@@ -139,13 +142,46 @@ export const schematicServiceAreaMapProvider: ServiceAreaMapProvider = {
 
 export function ServiceAreaMap({
   technicians,
+  customerLocation,
   provider = schematicServiceAreaMapProvider,
 }: ServiceAreaMapProps & { provider?: ServiceAreaMapProvider }) {
+  const [consented, setConsented] = useState(false);
+  const key = process.env.NEXT_PUBLIC_MAPTILER_KEY ?? '';
+  const mapConfigured = /^[A-Za-z0-9_-]{1,128}$/.test(key);
   const ProviderMap = provider.MapView;
   return (
-    <div data-map-provider={provider.id}>
-      <p className="mb-2 text-xs leading-5 text-midnight/55">{provider.attribution}</p>
-      <ProviderMap technicians={technicians} />
+    <div data-map-provider={consented && mapConfigured ? 'maptiler' : provider.id}>
+      {mapConfigured && !consented && (
+        <div className="mb-3 rounded-xl border border-midnight/10 bg-white p-4 text-sm">
+          <p>
+            Interactive tiles are provided by MapTiler. Loading them shares your IP address and
+            approximate map viewport with the provider. Your exact coordinates are not sent as a
+            form field.
+          </p>
+          <button
+            type="button"
+            onClick={() => setConsented(true)}
+            className="mt-2 min-h-10 rounded-lg bg-midnight px-4 font-semibold text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-midnight"
+          >
+            Load interactive map
+          </button>
+        </div>
+      )}
+      {mapConfigured && consented ? (
+        <LeafletCoverageMap
+          technicians={technicians}
+          customerLocation={customerLocation}
+          apiKey={key}
+        />
+      ) : (
+        <>
+          <p className="mb-2 text-xs leading-5 text-midnight/55">
+            {provider.attribution}
+            {!mapConfigured ? ' · Configure a public MapTiler key for an interactive map.' : ''}
+          </p>
+          <ProviderMap technicians={technicians} customerLocation={customerLocation} />
+        </>
+      )}
     </div>
   );
 }

@@ -7,7 +7,7 @@ import { ArrowRight, ClipboardList, RefreshCw, Search } from 'lucide-react';
 
 import { DashboardCard } from '@/features/dashboard/components/DashboardCard';
 import { DashboardPageHeader } from '@/features/dashboard/components/DashboardPageHeader';
-import { AdminBookingFrame } from '@/features/bookings/components/AdminBookingFrame';
+import { AdminShell } from '@/features/admin/components/AdminShell';
 import {
   BookingStatusPill,
   formatBookingDate,
@@ -137,7 +137,7 @@ export function AdminBookingListPage() {
   };
 
   return (
-    <AdminBookingFrame>
+    <AdminShell>
       <DashboardPageHeader
         eyebrow="Admin · private booking operations"
         title="Booking oversight."
@@ -370,6 +370,6 @@ export function AdminBookingListPage() {
           )}
         </DashboardCard>
       </div>
-    </AdminBookingFrame>
+    </AdminShell>
   );
 }

@@ -31,35 +31,3 @@ export type DemoActivity = {
   reference: string;
   stage: number;
 };
-
-export type ApplianceHistoryEntry = {
-  date: string;
-  title: string;
-  detail: string;
-};
-
-export type AppliancePartEntry = {
-  date: string;
-  part: string;
-  detail: string;
-};
-
-export type DemoAppliance = {
-  id: string;
-  name: string;
-  type: string;
-  brand: string;
-  location: string;
-  purchaseDate?: string;
-  serviceHistory: readonly ApplianceHistoryEntry[];
-  partsHistory: readonly AppliancePartEntry[];
-};
-
-export type DemoWarranty = {
-  id: string;
-  provider: string;
-  coveredItem: string;
-  startsOn: string;
-  expiresOn: string;
-  terms: string;
-};

@@ -158,6 +158,7 @@ class TechnicianProfile(Base):
         primary_key=True,
     )
     display_name: Mapped[str] = mapped_column(String(120), nullable=False)
+    phone_e164: Mapped[str | None] = mapped_column(String(16), nullable=True)
     professional_description: Mapped[str] = mapped_column(Text, nullable=False, default='')
     years_experience: Mapped[int | None] = mapped_column(SmallInteger, nullable=True)
     onboarding_status: Mapped[str] = mapped_column(
@@ -204,6 +205,7 @@ class UserAuditEvent(Base):
     action: Mapped[str] = mapped_column(String(32), nullable=False)
     before_value: Mapped[str | None] = mapped_column(String(64), nullable=True)
     after_value: Mapped[str] = mapped_column(String(64), nullable=False)
+    reason: Mapped[str | None] = mapped_column(String(500), nullable=True)
     request_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False

@@ -15,7 +15,7 @@ import {
 
 import { DashboardCard } from '@/features/dashboard/components/DashboardCard';
 import { DashboardPageHeader } from '@/features/dashboard/components/DashboardPageHeader';
-import { AdminBookingFrame } from '@/features/bookings/components/AdminBookingFrame';
+import { AdminShell } from '@/features/admin/components/AdminShell';
 import {
   BookingStatusPill,
   BookingTimeline,
@@ -268,14 +268,14 @@ export function AdminBookingDetailPage({ bookingId }: AdminBookingDetailPageProp
 
   if (loading) {
     return (
-      <AdminBookingFrame>
+      <AdminShell>
         <LoadingNotice label="Loading private booking and audit data…" />
-      </AdminBookingFrame>
+      </AdminShell>
     );
   }
   if (loadError || !booking) {
     return (
-      <AdminBookingFrame>
+      <AdminShell>
         <DashboardPageHeader
           eyebrow="Admin · private booking"
           title="Booking details"
@@ -301,7 +301,7 @@ export function AdminBookingDetailPage({ bookingId }: AdminBookingDetailPageProp
             </button>
           </div>
         </div>
-      </AdminBookingFrame>
+      </AdminShell>
     );
   }
 
@@ -329,7 +329,7 @@ export function AdminBookingDetailPage({ bookingId }: AdminBookingDetailPageProp
   const escalationAction = booking.escalation_status === 'escalated' ? 'resolved' : 'escalated';
 
   return (
-    <AdminBookingFrame>
+    <AdminShell>
       <DashboardPageHeader
         eyebrow="Admin · private booking oversight"
         title={booking.service_title}
@@ -482,9 +482,12 @@ export function AdminBookingDetailPage({ bookingId }: AdminBookingDetailPageProp
             <p className="text-sm leading-6 text-midnight/70">
               Current visit status:{' '}
               <strong className="capitalize">{booking.visit.status.replaceAll('_', ' ')}</strong>
-              {booking.visit.eta_at
+              {booking.visit.eta_at && booking.visit.eta_source && booking.visit.eta_updated_at
                 ? ` · ETA ${new Intl.DateTimeFormat('en-IN', { dateStyle: 'medium', timeStyle: 'short', timeZone: localTimezone }).format(new Date(booking.visit.eta_at))} (${localTimezone})`
                 : ' · no ETA provided'}
+              {booking.visit.eta_at && booking.visit.eta_source && booking.visit.eta_updated_at
+                ? ` · ${booking.visit.eta_source === 'admin_manual' ? 'Admin' : 'Technician'} estimate, updated ${new Date(booking.visit.eta_updated_at).toLocaleString()}`
+                : ''}
             </p>
           ) : (
             <p className="text-sm leading-6 text-midnight/70">
@@ -492,8 +495,8 @@ export function AdminBookingDetailPage({ bookingId }: AdminBookingDetailPageProp
             </p>
           )}
           <p className="mt-3 rounded-xl bg-[#f8faf7] p-3 text-xs leading-5 text-midnight/55">
-            Live technician location sharing is unavailable. This workflow records only manually
-            submitted visit updates.
+            Continuous live tracking is unavailable. Technicians may separately share a one-time
+            booking-scoped location; this visit workflow records only manual updates.
           </p>
           {canUpdateVisit && visitStatusOptions.length > 0 ? (
             <form
@@ -769,6 +772,6 @@ export function AdminBookingDetailPage({ bookingId }: AdminBookingDetailPageProp
           <BookingTimeline events={booking.events} showActors />
         </DashboardCard>
       </div>
-    </AdminBookingFrame>
+    </AdminShell>
   );
 }

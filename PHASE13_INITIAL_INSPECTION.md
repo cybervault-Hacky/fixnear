@@ -1,0 +1,161 @@
+# Phase 13 — initial inspection
+
+- Branch: `arena/e2b50fbe-fixnear`; HEAD: `ed3f11e7d3545787fa6c158e29ad99187e1d255e`.
+- Payment models, migrations, API endpoints, gateway or ledger: none found. Support includes payment/refund ticket categories; these are not financial processing.
+- PriceLock stores versioned quotes and itemized amounts in integer paise, plus decisions and booking audit events. Customer, technician and admin booking routes use distinct database-backed authorization dependencies.
+- Technician operational booking routes require an approved technician; customer and admin checks are server-side. Existing audit logs cover booking and privileged actions.
+- Phase 11 provides network and per-rule limits, trusted proxies, production Redis requirement, headers, CORS and host restrictions. Phase 12 has BFF cookies, JWT verification, email OTP, login and recovery, but PKCE/link callback and browser E2E remain incomplete.
+- Frontend technician earnings are explicitly fictional. There are no real payment/refund screens. Existing BFF enforces CSRF and Origin for mutations.
+- Backend tests use pytest and in-memory SQLite with shared fixtures, plus offline migration tests. Frontend uses Node tests, TypeScript, ESLint, Prettier and Playwright; Chromium was previously unavailable.
+- Complete initial Git status below; no staged changes at inspection.
+
+```text
+ M .env.example
+ M README.md
+ M backend/app/api/v1/__init__.py
+ M backend/app/api/v1/accounts.py
+ M backend/app/api/v1/admin_technicians.py
+ M backend/app/api/v1/admin_users.py
+ M backend/app/api/v1/bookings.py
+ M backend/app/auth/authorization.py
+ M backend/app/core/config.py
+ M backend/app/main.py
+ M backend/app/models/__init__.py
+ M backend/app/models/booking_management.py
+ M backend/app/models/user_management.py
+ M backend/app/schemas/accounts.py
+ M backend/app/schemas/booking_management.py
+ M backend/app/schemas/technician_management.py
+ M backend/app/services/admin_user_management.py
+ M backend/app/services/booking_management.py
+ M backend/app/services/technician_management.py
+ M backend/migrations/README.md
+ M backend/requirements.txt
+ M backend/tests/test_account_authorization.py
+ M backend/tests/test_booking_management.py
+ M backend/tests/test_database_migrations.py
+ M frontend/.env.example
+ M frontend/app/admin/service-catalog/page.tsx
+ M frontend/app/admin/technicians/page.tsx
+ M frontend/app/api/backend/[...path]/route.ts
+ M frontend/app/dashboard/homepassport/page.tsx
+ M frontend/app/dashboard/warranties/page.tsx
+ M frontend/e2e/dashboard.spec.ts
+ M frontend/features/bookings/components/AdminBookingDetailPage.tsx
+ D frontend/features/bookings/components/AdminBookingFrame.tsx
+ M frontend/features/bookings/components/AdminBookingListPage.tsx
+ M frontend/features/dashboard/components/DashboardOverview.tsx
+ M frontend/features/dashboard/components/DashboardShell.tsx
+ D frontend/features/dashboard/components/DemoApplianceCard.tsx
+ D frontend/features/dashboard/components/DemoWarrantyCard.tsx
+ D frontend/features/dashboard/components/HomePassportPageContent.tsx
+ D frontend/features/dashboard/components/WarrantiesPageContent.tsx
+ M frontend/features/dashboard/data/demo-data.ts
+ M frontend/features/dashboard/types/dashboard.ts
+ M frontend/features/technician/components/TechnicianDashboardShell.tsx
+ M frontend/lib/server/auth.ts
+ M frontend/next.config.ts
+ M frontend/tests/backend-api.test.mjs
+?? PHASE11_SECURITY_FOLLOWUP_REPORT.md
+?? PHASE12B_AUTHENTICATION_REPORT.md
+?? PHASE12C_AUTHENTICATION_REPORT.md
+?? PHASE12_AUTHENTICATION_REPORT.md
+?? PHASE12_CLOSURE_REPORT.md
+?? PHASE12_FINAL_REPORT.md
+?? backend/app/api/v1/admin_operations.py
+?? backend/app/api/v1/homepassport.py
+?? backend/app/api/v1/reviews.py
+?? backend/app/api/v1/support.py
+?? backend/app/core/rate_limit.py
+?? backend/app/core/rate_limit_middleware.py
+?? backend/app/core/security_headers.py
+?? backend/app/models/homepassport.py
+?? backend/app/models/operations.py
+?? backend/app/schemas/homepassport.py
+?? backend/app/schemas/operations.py
+?? backend/app/services/admin_audit.py
+?? backend/app/services/admin_customers.py
+?? backend/app/services/admin_dashboard.py
+?? backend/app/services/document_storage.py
+?? backend/app/services/homepassport.py
+?? backend/app/services/operations_audit.py
+?? backend/app/services/reviews.py
+?? backend/app/services/support.py
+?? backend/migrations/versions/0006_homepassport.py
+?? backend/migrations/versions/0007_operations.py
+?? backend/migrations/versions/0008_technician_phone.py
+?? backend/tests/conftest.py
+?? backend/tests/test_audit_probe.py
+?? backend/tests/test_homepassport.py
+?? backend/tests/test_operations.py
+?? backend/tests/test_privileged_mutation_reasons.py
+?? backend/tests/test_rate_limiting.py
+?? backend/tests/test_security_headers_and_cors.py
+?? backend/tests/test_technician_approval_access.py
+?? backend/tests/test_technician_registration.py
+?? frontend/app/admin/audit/page.tsx
+?? frontend/app/admin/customers/page.tsx
+?? frontend/app/admin/homepassport/page.tsx
+?? frontend/app/admin/page.tsx
+?? frontend/app/admin/reviews/page.tsx
+?? frontend/app/admin/support/page.tsx
+?? frontend/app/api/auth/login/route.ts
+?? frontend/app/api/auth/recover/route.ts
+?? frontend/app/api/auth/resend/route.ts
+?? frontend/app/api/auth/reset-password/route.ts
+?? frontend/app/api/auth/signup/route.ts
+?? frontend/app/api/auth/verify/customer/route.ts
+?? frontend/app/api/auth/verify/technician/route.ts
+?? frontend/app/dashboard/claims/page.tsx
+?? frontend/app/dashboard/documents/page.tsx
+?? frontend/app/dashboard/homepassport/[applianceId]/page.tsx
+?? frontend/app/dashboard/reviews/page.tsx
+?? frontend/app/dashboard/support/page.tsx
+?? frontend/app/dashboard/warranties/[warrantyId]/page.tsx
+?? frontend/app/forgot-password/page.tsx
+?? frontend/app/login/page.tsx
+?? frontend/app/reset-password/page.tsx
+?? frontend/app/signup/page.tsx
+?? frontend/app/signup/technician/page.tsx
+?? frontend/app/technician/reviews/page.tsx
+?? frontend/app/verify-email/page.tsx
+?? frontend/features/admin/components/AdminAuditPage.tsx
+?? frontend/features/admin/components/AdminCustomersPage.tsx
+?? frontend/features/admin/components/AdminOverviewPage.tsx
+?? frontend/features/admin/components/AdminReviewsPage.tsx
+?? frontend/features/admin/components/AdminShell.tsx
+?? frontend/features/admin/components/admin-errors.ts
+?? frontend/features/auth/components/RecoveryForm.tsx
+?? frontend/features/auth/components/SignupForm.tsx
+?? frontend/features/auth/components/VerifyEmailForm.tsx
+?? frontend/features/homepassport/components/AdminHomePassportPage.tsx
+?? frontend/features/homepassport/components/ApplianceDetailPage.tsx
+?? frontend/features/homepassport/components/ApplianceForm.tsx
+?? frontend/features/homepassport/components/ClaimsPage.tsx
+?? frontend/features/homepassport/components/DocumentsPage.tsx
+?? frontend/features/homepassport/components/HomePassportPageContent.tsx
+?? frontend/features/homepassport/components/WarrantiesPageContent.tsx
+?? frontend/features/homepassport/components/WarrantyDetailPage.tsx
+?? frontend/features/homepassport/components/passport-ui.tsx
+?? frontend/features/reviews/components/CustomerReviewsPage.tsx
+?? frontend/features/reviews/components/TechnicianReviewsPage.tsx
+?? frontend/features/support/components/AdminSupportDeskPage.tsx
+?? frontend/features/support/components/CustomerSupportPage.tsx
+?? frontend/host-policy.d.mts
+?? frontend/host-policy.mjs
+?? frontend/lib/api/admin.ts
+?? frontend/lib/api/homepassport-utils.ts
+?? frontend/lib/api/homepassport.ts
+?? frontend/lib/api/reviews.ts
+?? frontend/lib/api/support.ts
+?? frontend/proxy.ts
+?? frontend/security-headers.d.mts
+?? frontend/security-headers.mjs
+?? frontend/tests/homepassport-utils.test.mjs
+?? frontend/tests/host-policy.test.mjs
+?? frontend/tests/login-api.test.mjs
+?? frontend/tests/recovery-api.test.mjs
+?? frontend/tests/request-origin.test.mjs
+?? frontend/tests/security-headers.test.mjs
+?? frontend/tests/signup-api.test.mjs
+```

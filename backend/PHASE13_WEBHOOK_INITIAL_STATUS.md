@@ -1,0 +1,163 @@
+# Phase 13 mock provider milestone initial status
+
+Branch `arena/e2b50fbe-fixnear`; HEAD `ed3f11e7d3545787fa6c158e29ad99187e1d255e`; staged changes: none.
+
+```text
+ M ../.env.example
+ M ../README.md
+ M app/api/v1/__init__.py
+ M app/api/v1/accounts.py
+ M app/api/v1/admin_technicians.py
+ M app/api/v1/admin_users.py
+ M app/api/v1/bookings.py
+ M app/auth/authorization.py
+ M app/core/config.py
+ M app/main.py
+ M app/models/__init__.py
+ M app/models/booking_management.py
+ M app/models/user_management.py
+ M app/schemas/accounts.py
+ M app/schemas/booking_management.py
+ M app/schemas/technician_management.py
+ M app/services/admin_user_management.py
+ M app/services/booking_management.py
+ M app/services/technician_management.py
+ M migrations/README.md
+ M requirements.txt
+ M tests/test_account_authorization.py
+ M tests/test_booking_management.py
+ M tests/test_database_migrations.py
+ M ../frontend/.env.example
+ M ../frontend/app/admin/service-catalog/page.tsx
+ M ../frontend/app/admin/technicians/page.tsx
+ M ../frontend/app/api/backend/[...path]/route.ts
+ M ../frontend/app/dashboard/homepassport/page.tsx
+ M ../frontend/app/dashboard/warranties/page.tsx
+ M ../frontend/e2e/dashboard.spec.ts
+ M ../frontend/features/bookings/components/AdminBookingDetailPage.tsx
+ D ../frontend/features/bookings/components/AdminBookingFrame.tsx
+ M ../frontend/features/bookings/components/AdminBookingListPage.tsx
+ M ../frontend/features/dashboard/components/DashboardOverview.tsx
+ M ../frontend/features/dashboard/components/DashboardShell.tsx
+ D ../frontend/features/dashboard/components/DemoApplianceCard.tsx
+ D ../frontend/features/dashboard/components/DemoWarrantyCard.tsx
+ D ../frontend/features/dashboard/components/HomePassportPageContent.tsx
+ D ../frontend/features/dashboard/components/WarrantiesPageContent.tsx
+ M ../frontend/features/dashboard/data/demo-data.ts
+ M ../frontend/features/dashboard/types/dashboard.ts
+ M ../frontend/features/technician/components/TechnicianDashboardShell.tsx
+ M ../frontend/lib/server/auth.ts
+ M ../frontend/next.config.ts
+ M ../frontend/tests/backend-api.test.mjs
+?? ../PHASE11_SECURITY_FOLLOWUP_REPORT.md
+?? ../PHASE12B_AUTHENTICATION_REPORT.md
+?? ../PHASE12C_AUTHENTICATION_REPORT.md
+?? ../PHASE12_AUTHENTICATION_REPORT.md
+?? ../PHASE12_CLOSURE_REPORT.md
+?? ../PHASE12_FINAL_REPORT.md
+?? ../PHASE13_CONTINUATION_INITIAL_STATUS.md
+?? ../PHASE13_FINAL_REPORT.md
+?? ../PHASE13_INITIAL_INSPECTION.md
+?? app/api/v1/admin_operations.py
+?? app/api/v1/homepassport.py
+?? app/api/v1/reviews.py
+?? app/api/v1/simulated_payments.py
+?? app/api/v1/support.py
+?? app/core/rate_limit.py
+?? app/core/rate_limit_middleware.py
+?? app/core/security_headers.py
+?? app/models/homepassport.py
+?? app/models/operations.py
+?? app/models/payment_intent.py
+?? app/schemas/homepassport.py
+?? app/schemas/operations.py
+?? app/services/admin_audit.py
+?? app/services/admin_customers.py
+?? app/services/admin_dashboard.py
+?? app/services/document_storage.py
+?? app/services/homepassport.py
+?? app/services/operations_audit.py
+?? app/services/reviews.py
+?? app/services/simulated_finance.py
+?? app/services/support.py
+?? migrations/versions/0006_homepassport.py
+?? migrations/versions/0007_operations.py
+?? migrations/versions/0008_technician_phone.py
+?? migrations/versions/0009_simulated_intent.py
+?? tests/conftest.py
+?? tests/test_audit_probe.py
+?? tests/test_homepassport.py
+?? tests/test_operations.py
+?? tests/test_privileged_mutation_reasons.py
+?? tests/test_rate_limiting.py
+?? tests/test_security_headers_and_cors.py
+?? tests/test_simulated_finance.py
+?? tests/test_simulated_payment_drafts.py
+?? tests/test_technician_approval_access.py
+?? tests/test_technician_registration.py
+?? ../frontend/app/admin/audit/page.tsx
+?? ../frontend/app/admin/customers/page.tsx
+?? ../frontend/app/admin/homepassport/page.tsx
+?? ../frontend/app/admin/page.tsx
+?? ../frontend/app/admin/reviews/page.tsx
+?? ../frontend/app/admin/support/page.tsx
+?? ../frontend/app/api/auth/login/route.ts
+?? ../frontend/app/api/auth/recover/route.ts
+?? ../frontend/app/api/auth/resend/route.ts
+?? ../frontend/app/api/auth/reset-password/route.ts
+?? ../frontend/app/api/auth/signup/route.ts
+?? ../frontend/app/api/auth/verify/customer/route.ts
+?? ../frontend/app/api/auth/verify/technician/route.ts
+?? ../frontend/app/dashboard/claims/page.tsx
+?? ../frontend/app/dashboard/documents/page.tsx
+?? ../frontend/app/dashboard/homepassport/[applianceId]/page.tsx
+?? ../frontend/app/dashboard/reviews/page.tsx
+?? ../frontend/app/dashboard/support/page.tsx
+?? ../frontend/app/dashboard/warranties/[warrantyId]/page.tsx
+?? ../frontend/app/forgot-password/page.tsx
+?? ../frontend/app/login/page.tsx
+?? ../frontend/app/reset-password/page.tsx
+?? ../frontend/app/signup/page.tsx
+?? ../frontend/app/signup/technician/page.tsx
+?? ../frontend/app/technician/reviews/page.tsx
+?? ../frontend/app/verify-email/page.tsx
+?? ../frontend/features/admin/components/AdminAuditPage.tsx
+?? ../frontend/features/admin/components/AdminCustomersPage.tsx
+?? ../frontend/features/admin/components/AdminOverviewPage.tsx
+?? ../frontend/features/admin/components/AdminReviewsPage.tsx
+?? ../frontend/features/admin/components/AdminShell.tsx
+?? ../frontend/features/admin/components/admin-errors.ts
+?? ../frontend/features/auth/components/RecoveryForm.tsx
+?? ../frontend/features/auth/components/SignupForm.tsx
+?? ../frontend/features/auth/components/VerifyEmailForm.tsx
+?? ../frontend/features/homepassport/components/AdminHomePassportPage.tsx
+?? ../frontend/features/homepassport/components/ApplianceDetailPage.tsx
+?? ../frontend/features/homepassport/components/ApplianceForm.tsx
+?? ../frontend/features/homepassport/components/ClaimsPage.tsx
+?? ../frontend/features/homepassport/components/DocumentsPage.tsx
+?? ../frontend/features/homepassport/components/HomePassportPageContent.tsx
+?? ../frontend/features/homepassport/components/WarrantiesPageContent.tsx
+?? ../frontend/features/homepassport/components/WarrantyDetailPage.tsx
+?? ../frontend/features/homepassport/components/passport-ui.tsx
+?? ../frontend/features/reviews/components/CustomerReviewsPage.tsx
+?? ../frontend/features/reviews/components/TechnicianReviewsPage.tsx
+?? ../frontend/features/support/components/AdminSupportDeskPage.tsx
+?? ../frontend/features/support/components/CustomerSupportPage.tsx
+?? ../frontend/host-policy.d.mts
+?? ../frontend/host-policy.mjs
+?? ../frontend/lib/api/admin.ts
+?? ../frontend/lib/api/homepassport-utils.ts
+?? ../frontend/lib/api/homepassport.ts
+?? ../frontend/lib/api/reviews.ts
+?? ../frontend/lib/api/support.ts
+?? ../frontend/proxy.ts
+?? ../frontend/security-headers.d.mts
+?? ../frontend/security-headers.mjs
+?? ../frontend/tests/homepassport-utils.test.mjs
+?? ../frontend/tests/host-policy.test.mjs
+?? ../frontend/tests/login-api.test.mjs
+?? ../frontend/tests/recovery-api.test.mjs
+?? ../frontend/tests/request-origin.test.mjs
+?? ../frontend/tests/security-headers.test.mjs
+?? ../frontend/tests/signup-api.test.mjs
+```
