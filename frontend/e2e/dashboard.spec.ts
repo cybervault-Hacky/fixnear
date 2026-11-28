@@ -13,15 +13,28 @@ const dashboardRoutes = [
     heading: 'Service history, clearly laid out.',
     navigationLabel: 'Service activity',
   },
+] as const;
+
+const accountLinkedRoutes = [
   {
     path: '/dashboard/homepassport',
-    heading: 'A home record for the things you rely on.',
+    heading: 'Your appliances, service history and warranties in one place.',
     navigationLabel: 'HomePassport',
   },
   {
     path: '/dashboard/warranties',
-    heading: 'Keep the terms alongside the record.',
+    heading: 'Warranties, tracked honestly.',
     navigationLabel: 'Warranties',
+  },
+  {
+    path: '/dashboard/claims',
+    heading: 'Your warranty claims.',
+    navigationLabel: 'Claims',
+  },
+  {
+    path: '/dashboard/documents',
+    heading: 'Your document vault.',
+    navigationLabel: 'Documents',
   },
 ] as const;
 
@@ -72,6 +85,14 @@ for (const route of dashboardRoutes) {
 }
 
 for (const viewport of responsiveViewports) {
+  for (const route of accountLinkedRoutes) {
+    test(`${route.path} fits ${viewport.name} without horizontal overflow`, async ({ page }) => {
+      await page.setViewportSize({ width: viewport.width, height: viewport.height });
+      await page.goto(route.path);
+      await expect(page.getByRole('heading', { level: 1, name: route.heading })).toBeVisible();
+      await expectNoHorizontalOverflow(page, `${route.path} at ${viewport.name}`);
+    });
+  }
   for (const route of dashboardRoutes) {
     test(`${route.path} fits ${viewport.name} without horizontal overflow`, async ({ page }) => {
       await page.setViewportSize({ width: viewport.width, height: viewport.height });
@@ -174,27 +195,47 @@ test('addresses support validation, add, edit, default selection and delete with
   await expect(page.getByRole('status')).toContainText('saved in this dashboard session only');
 });
 
-test('HomePassport opens sample appliance service and parts records', async ({ page }) => {
-  await page.goto('/dashboard/homepassport');
-  await expect(page.getByRole('heading', { name: 'No real appliances are saved' })).toBeVisible();
-  await page.getByText('View sample service and parts history').first().click();
-  await expect(page.getByText('Service history · sample').first()).toBeVisible();
-  await expect(page.getByText('Parts replaced · sample').first()).toBeVisible();
-  await expect(page.getByText(/ExampleAir|SampleCool/).first()).toBeVisible();
-});
+for (const route of accountLinkedRoutes) {
+  test(`${route.path} renders the account-linked layout without the demo notice`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.goto(route.path);
 
-test('warranty cards show active and expired sample-date states with a coverage disclaimer', async ({
+    await expect(page.getByRole('heading', { level: 1, name: route.heading })).toBeVisible();
+    await expect(page.getByRole('note')).toHaveCount(0);
+    await expect(page.getByRole('navigation', { name: 'Customer dashboard' })).toBeVisible();
+    await expect(page.getByRole('main')).toBeVisible();
+    const activeLink = page
+      .getByRole('navigation', { name: 'Customer dashboard' })
+      .getByRole('link', { name: route.navigationLabel });
+    await expect(activeLink).toBeVisible();
+    await expect(activeLink).toHaveAttribute('aria-current', 'page');
+  });
+}
+
+test('HomePassport renders either the account workspace or an authorization message', async ({
   page,
 }) => {
+  await page.goto('/dashboard/homepassport');
+  const heading = page.getByRole('heading', {
+    level: 1,
+    name: 'Your appliances, service history and warranties in one place.',
+  });
+  await expect(heading).toBeVisible();
+  // Signed-out sessions see an authorization notice; signed-in sessions see either the
+  // empty state or appliance content. Never fabricated sample records.
+  const visible = page.locator('body');
+  await expect(visible).not.toContainText('SampleCool');
+  await expect(visible).not.toContainText('ExampleAir');
+});
+
+test('warranty page carries the coverage disclaimer', async ({ page }) => {
   await page.goto('/dashboard/warranties');
   await expect(
-    page.getByRole('heading', { name: 'No live warranty records are connected' }),
+    page.getByRole('heading', { level: 1, name: 'Warranties, tracked honestly.' }),
   ).toBeVisible();
-  await expect(page.getByText('Active sample dates')).toBeVisible();
-  await expect(page.getByText('Expired sample dates')).toBeVisible();
-  await expect(
-    page.getByText(/do not promise that any product or repair is covered/i),
-  ).toBeVisible();
+  await expect(page.getByText(/provider’s recorded terms decide claims/i)).toBeVisible();
 });
 
 test('mobile dashboard drawer is keyboard-operable and navigates between sections', async ({
@@ -219,7 +260,7 @@ test('mobile dashboard drawer is keyboard-operable and navigates between section
   await mobileNavigation.getByRole('link', { name: 'Warranties' }).click();
   await expect(page).toHaveURL(/\/dashboard\/warranties$/);
   await expect(
-    page.getByRole('heading', { level: 1, name: 'Keep the terms alongside the record.' }),
+    page.getByRole('heading', { level: 1, name: 'Warranties, tracked honestly.' }),
   ).toBeVisible();
   await expect(mobileNavigation).toBeHidden();
 });

@@ -4,7 +4,13 @@ import { test } from 'node:test';
 import { proxyBackendRequest } from '../app/api/backend/[...path]/route.ts';
 import { getAuthCookieNames } from '../lib/server/auth.ts';
 
-const ENVIRONMENT_KEYS = ['NODE_ENV', 'FIXNEAR_API_BASE_URL', 'BACKEND_URL'];
+const ENVIRONMENT_KEYS = [
+  'NODE_ENV',
+  'FIXNEAR_API_BASE_URL',
+  'BACKEND_URL',
+  'FIXNEAR_ALLOWED_HOSTS',
+  'FIXNEAR_TRUST_PROXY_HEADERS',
+];
 const CSRF = 'c'.repeat(43);
 
 function setEnvironment(t, values = {}) {
@@ -13,6 +19,8 @@ function setEnvironment(t, values = {}) {
     NODE_ENV: 'production',
     FIXNEAR_API_BASE_URL: 'https://api.fixnear.mock',
     BACKEND_URL: '',
+    FIXNEAR_ALLOWED_HOSTS: 'fixnear.example',
+    FIXNEAR_TRUST_PROXY_HEADERS: 'false',
     ...values,
   });
   t.after(() => {

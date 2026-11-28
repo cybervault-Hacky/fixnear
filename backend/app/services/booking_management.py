@@ -17,6 +17,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.orm.exc import StaleDataError
 
 from app.models import (
+    Appliance,
     AppUser,
     Booking,
     BookingAttachment,
@@ -49,6 +50,8 @@ from app.schemas.booking_management import (
     QuoteDecisionRequest,
 )
 from app.services.booking_storage import BookingAttachmentStorage
+from app.services.homepassport import create_service_history_for_booking
+from app.services.notifications import create_booking_event_notifications
 
 MAX_QUOTE_TOTAL_PAISE = 1_000_000_000_000
 CUSTOMER_CANCELLABLE = {
@@ -240,6 +243,7 @@ def _event(
 ) -> BookingEvent:
     booking.event_sequence += 1
     event = BookingEvent(
+        id=uuid4(),
         booking_id=booking.id,
         sequence=booking.event_sequence,
         actor_user_id=actor_id,
@@ -252,6 +256,7 @@ def _event(
         is_internal=is_internal,
     )
     session.add(event)
+    create_booking_event_notifications(session, booking, event)
     return event
 
 
@@ -433,6 +438,28 @@ def create_booking(
             status.HTTP_422_UNPROCESSABLE_CONTENT,
         )
 
+    appliance_id: UUID | None = None
+    if request.appliance_id is not None:
+        appliance = session.scalar(
+            select(Appliance).where(
+                Appliance.id == request.appliance_id,
+                Appliance.customer_user_id == actor.id,
+            )
+        )
+        if appliance is None:
+            raise _error(
+                "invalid_appliance",
+                "Select one of your own appliances to link to this booking.",
+                status.HTTP_422_UNPROCESSABLE_CONTENT,
+            )
+        if appliance.is_archived:
+            raise _error(
+                "invalid_appliance",
+                "This appliance is archived and cannot be linked to a new booking.",
+                status.HTTP_422_UNPROCESSABLE_CONTENT,
+            )
+        appliance_id = appliance.id
+
     timezone = ZoneInfo(request.timezone_name)
     local_now = datetime.now(timezone)
     if request.preferred_date < local_now.date() or (
@@ -475,6 +502,7 @@ def create_booking(
         service_id=service.id,
         service_slug_snapshot=service.slug,
         service_title_snapshot=service.title,
+        appliance_id=appliance_id,
         saved_address_id=saved_address_id,
         address_label=address_values["label"],
         recipient_name=address_values["recipient_name"],
@@ -768,6 +796,13 @@ def transition_technician_booking(
         note=request.note,
     )
     _set_status(session, booking=booking, actor=actor, new_status=next_status)
+    if request.action == "complete":
+        create_service_history_for_booking(
+            session,
+            booking=booking,
+            actor=actor,
+            work_note=request.note,
+        )
     return booking.id
 
 
@@ -836,6 +871,10 @@ def update_booking_visit(
         visit.eta_at = eta_at
         visit.updated_by_user_id = actor.id
         session.flush()
+
+    # Only label estimates as manual, attributed to the authenticated role.
+    visit.eta_source = ("admin_manual" if is_admin else "technician_manual") if eta_at else None
+    visit.eta_updated_at = datetime.now(UTC) if eta_at else None
 
     _event(
         session,
@@ -1168,6 +1207,7 @@ def _summary_payload(
         "id": booking.id,
         "service_slug": booking.service_slug_snapshot,
         "service_title": booking.service_title_snapshot,
+        "appliance_id": booking.appliance_id,
         "status": booking.status,
         "preferred_date": booking.preferred_date,
         "preferred_start": booking.preferred_start,
@@ -1193,7 +1233,9 @@ def _visit_payload(visit: BookingVisit | None) -> dict[str, Any] | None:
         "id": visit.id,
         "booking_id": visit.booking_id,
         "status": visit.status,
-        "eta_at": visit.eta_at,
+        "eta_at": visit.eta_at if visit.eta_source and visit.eta_updated_at else None,
+        "eta_source": visit.eta_source,
+        "eta_updated_at": visit.eta_updated_at,
         "updated_by_user_id": visit.updated_by_user_id,
         "updated_at": visit.updated_at,
         "live_tracking_status": "unavailable",

@@ -139,6 +139,7 @@ class Booking(Base):
         Index("ix_bookings_technician_status", "assigned_technician_user_id", "status"),
         Index("ix_bookings_service_status", "service_id", "status"),
         Index("ix_bookings_escalation_created", "escalation_status", "created_at"),
+        Index("ix_bookings_appliance", "appliance_id"),
     )
 
     id: Mapped[UUID] = mapped_column(
@@ -156,6 +157,11 @@ class Booking(Base):
     )
     service_slug_snapshot: Mapped[str] = mapped_column(String(80), nullable=False)
     service_title_snapshot: Mapped[str] = mapped_column(String(160), nullable=False)
+    appliance_id: Mapped[UUID | None] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("appliances.id", ondelete="SET NULL"),
+        nullable=True,
+    )
     saved_address_id: Mapped[UUID | None] = mapped_column(
         Uuid(as_uuid=True),
         ForeignKey("customer_addresses.id", ondelete="SET NULL"),
@@ -407,6 +413,8 @@ class BookingVisit(Base):
     eta_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
+    eta_source: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    eta_updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     updated_by_user_id: Mapped[UUID | None] = mapped_column(
         Uuid(as_uuid=True),
         ForeignKey("app_users.id", ondelete="SET NULL"),

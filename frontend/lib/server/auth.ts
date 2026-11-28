@@ -411,3 +411,424 @@ export async function handleLogout(request: Request): Promise<Response> {
   clearAuthCookies(response, true);
   return response;
 }
+
+/** Bounded login body; never retain credentials or return provider response bodies. */
+async function readLoginBody(
+  request: Request,
+): Promise<{ email: string; password: string } | null> {
+  if (
+    request.headers.get('content-type')?.split(';')[0].trim().toLowerCase() !== 'application/json'
+  )
+    return null;
+  const reader = request.body?.getReader();
+  if (!reader) return null;
+  const chunks: Uint8Array[] = [];
+  let size = 0;
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    size += value.length;
+    if (size > 4096) {
+      await reader.cancel();
+      return null;
+    }
+    chunks.push(value);
+  }
+  try {
+    const bytes = new Uint8Array(size);
+    let offset = 0;
+    for (const chunk of chunks) {
+      bytes.set(chunk, offset);
+      offset += chunk.length;
+    }
+    const value: unknown = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes));
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+    const obj = value as Record<string, unknown>;
+    if (
+      Object.keys(obj).some((key) => !['email', 'password'].includes(key)) ||
+      typeof obj.email !== 'string' ||
+      typeof obj.password !== 'string'
+    )
+      return null;
+    const email = obj.email.trim().toLowerCase();
+    if (
+      email.length > 254 ||
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ||
+      obj.password.length < 1 ||
+      obj.password.length > 128
+    )
+      return null;
+    return { email, password: obj.password };
+  } catch {
+    return null;
+  }
+}
+
+function loginRateGateUrl(): string | null {
+  const raw = process.env.FIXNEAR_API_BASE_URL?.trim() || process.env.BACKEND_URL?.trim();
+  if (!raw) return null;
+  try {
+    const url = new URL(raw);
+    const loopback = ['localhost', '127.0.0.1', '[::1]'].includes(url.hostname);
+    if (
+      url.username ||
+      url.password ||
+      url.search ||
+      url.hash ||
+      !['', '/'].includes(url.pathname) ||
+      (url.protocol !== 'https:' && !(url.protocol === 'http:' && !isProduction() && loopback))
+    )
+      return null;
+    return `${url.origin}/api/v1/auth/attempt`;
+  } catch {
+    return null;
+  }
+}
+
+/** Password exchange remains server-side; tokens go only into existing HttpOnly cookies. */
+export async function handleLogin(request: Request): Promise<Response> {
+  if (!validateStateChangingRequest(request))
+    return createJsonResponse({ error: 'forbidden' }, 403);
+  const body = await readLoginBody(request);
+  if (!body) return createJsonResponse({ error: 'invalid_request' }, 400);
+  const config = getSupabaseAuthConfig();
+  const gate = loginRateGateUrl();
+  if (!config || !gate) return createJsonResponse({ error: 'authentication_unavailable' }, 503);
+  try {
+    // Next.js route handlers do not expose a trustworthy peer. The API gate charges
+    // the BFF network peer, not any browser-supplied forwarded address. This is a
+    // shared ceiling, not a per-user limit; an ingress limit is still necessary.
+    const limit = await upstreamRequest(gate, { method: 'POST' });
+    if (limit.status === 429) {
+      const response = createJsonResponse({ error: 'rate_limited' }, 429);
+      const retry = limit.headers.get('retry-after');
+      if (retry && /^\d{1,6}$/.test(retry)) response.headers.set('Retry-After', retry);
+      return response;
+    }
+    if (!limit.ok) return createJsonResponse({ error: 'authentication_unavailable' }, 503);
+    const provider = await upstreamRequest(endpoint(config, 'token?grant_type=password'), {
+      method: 'POST',
+      headers: { apikey: config.anonKey, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    if ([400, 401, 403, 422].includes(provider.status))
+      return createJsonResponse({ error: 'invalid_credentials' }, 401);
+    if (!provider.ok) return createJsonResponse({ error: 'authentication_unavailable' }, 503);
+    const value: unknown = await provider.json();
+    const tokens = readTokenResponse(value);
+    const record = value && typeof value === 'object' ? (value as Record<string, unknown>) : null;
+    const user =
+      record?.user && typeof record.user === 'object'
+        ? (record.user as Record<string, unknown>)
+        : null;
+    if (!tokens || typeof user?.email_confirmed_at !== 'string' || !user.email_confirmed_at) {
+      return createJsonResponse({ error: 'invalid_credentials' }, 401);
+    }
+    const response = createJsonResponse({ user: tokens.user });
+    setAuthCookies(response, tokens);
+    return response;
+  } catch {
+    return createJsonResponse({ error: 'authentication_unavailable' }, 503);
+  }
+}
+
+// Recovery uses Supabase email OTPs (template must show {{ .Token }}). Credentials
+// and OTPs stay in bounded POST bodies; recovery tokens never enter URLs or cookies.
+async function readRecoveryBody(request: Request): Promise<Record<string, unknown> | null> {
+  if (
+    request.headers.get('content-type')?.split(';')[0].trim().toLowerCase() !== 'application/json'
+  )
+    return null;
+  const reader = request.body?.getReader();
+  if (!reader) return null;
+  const chunks: Uint8Array[] = [];
+  let size = 0;
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      size += value.length;
+      if (size > 4096) {
+        await reader.cancel();
+        return null;
+      }
+      chunks.push(value);
+    }
+    const bytes = new Uint8Array(size);
+    let offset = 0;
+    for (const chunk of chunks) {
+      bytes.set(chunk, offset);
+      offset += chunk.length;
+    }
+    const obj: unknown = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes));
+    return obj && typeof obj === 'object' && !Array.isArray(obj)
+      ? (obj as Record<string, unknown>)
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+function recoveryEmail(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const email = value.trim().toLowerCase();
+  return email.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? email : null;
+}
+
+/** Shared backend gate intentionally charges the BFF peer, not spoofable IP headers. */
+async function recoveryRateGate(): Promise<Response | null> {
+  const url = loginRateGateUrl();
+  if (!url) return createJsonResponse({ error: 'authentication_unavailable' }, 503);
+  try {
+    const result = await upstreamRequest(url, { method: 'POST' });
+    if (result.status === 429) {
+      const response = createJsonResponse({ error: 'rate_limited' }, 429);
+      const retry = result.headers.get('retry-after');
+      if (retry && /^\d{1,6}$/.test(retry)) response.headers.set('Retry-After', retry);
+      return response;
+    }
+    return result.ok ? null : createJsonResponse({ error: 'authentication_unavailable' }, 503);
+  } catch {
+    return createJsonResponse({ error: 'authentication_unavailable' }, 503);
+  }
+}
+
+export async function handleRecoveryRequest(request: Request): Promise<Response> {
+  if (!validateStateChangingRequest(request))
+    return createJsonResponse({ error: 'forbidden' }, 403);
+  const body = await readRecoveryBody(request);
+  const email = recoveryEmail(body?.email);
+  if (!body || Object.keys(body).some((key) => key !== 'email') || !email)
+    return createJsonResponse({ error: 'invalid_request' }, 400);
+  const config = getSupabaseAuthConfig();
+  if (!config) return createJsonResponse({ error: 'authentication_unavailable' }, 503);
+  const limited = await recoveryRateGate();
+  if (limited) return limited;
+  try {
+    const result = await upstreamRequest(endpoint(config, 'recover'), {
+      method: 'POST',
+      headers: { apikey: config.anonKey, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    });
+    // Do not disclose whether an address exists, even if the provider distinguishes it.
+    if (result.status >= 500)
+      return createJsonResponse({ error: 'authentication_unavailable' }, 503);
+    return createJsonResponse({
+      message: 'If the account exists, recovery instructions will be sent.',
+    });
+  } catch {
+    return createJsonResponse({ error: 'authentication_unavailable' }, 503);
+  }
+}
+
+export async function handlePasswordReset(request: Request): Promise<Response> {
+  if (!validateStateChangingRequest(request))
+    return createJsonResponse({ error: 'forbidden' }, 403);
+  const body = await readRecoveryBody(request);
+  const email = recoveryEmail(body?.email);
+  if (
+    !body ||
+    Object.keys(body).some(
+      (key) => !['email', 'otp', 'password', 'confirmPassword'].includes(key),
+    ) ||
+    !email ||
+    typeof body.otp !== 'string' ||
+    !/^\d{6,8}$/.test(body.otp) ||
+    typeof body.password !== 'string' ||
+    body.password.length < 12 ||
+    body.password.length > 128 ||
+    body.password !== body.confirmPassword
+  )
+    return createJsonResponse({ error: 'invalid_request' }, 400);
+  const config = getSupabaseAuthConfig();
+  if (!config) return createJsonResponse({ error: 'authentication_unavailable' }, 503);
+  const limited = await recoveryRateGate();
+  if (limited) return limited;
+  try {
+    const verification = await upstreamRequest(endpoint(config, 'verify'), {
+      method: 'POST',
+      headers: { apikey: config.anonKey, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, token: body.otp, type: 'recovery' }),
+    });
+    if ([400, 401, 403, 404, 422].includes(verification.status))
+      return createJsonResponse({ error: 'invalid_or_expired_code' }, 400);
+    if (!verification.ok) return createJsonResponse({ error: 'authentication_unavailable' }, 503);
+    const tokens = readTokenResponse(await verification.json());
+    if (!tokens) return createJsonResponse({ error: 'authentication_unavailable' }, 503);
+    let updated: Response;
+    try {
+      updated = await upstreamRequest(endpoint(config, 'user'), {
+        method: 'PUT',
+        headers: {
+          apikey: config.anonKey,
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${tokens.accessToken}`,
+        },
+        body: JSON.stringify({ password: body.password }),
+      });
+    } finally {
+      // Recovery access is never exposed to the browser. Revoke the provider session
+      // even when updating fails; otherwise it expires under provider policy.
+      try {
+        await upstreamRequest(endpoint(config, 'logout'), {
+          method: 'POST',
+          headers: { apikey: config.anonKey, Authorization: `Bearer ${tokens.accessToken}` },
+        });
+      } catch {
+        /* Best effort only. */
+      }
+    }
+    if (!updated.ok) return createJsonResponse({ error: 'authentication_unavailable' }, 503);
+    const response = createJsonResponse({
+      message: 'Password updated. Sign in with your new password.',
+    });
+    clearAuthCookies(response);
+    return response;
+  } catch {
+    return createJsonResponse({ error: 'authentication_unavailable' }, 503);
+  }
+}
+
+/** Public registration accepts only the fixed route's profile type, never a role field. */
+export async function handleSignup(request: Request): Promise<Response> {
+  if (!validateStateChangingRequest(request))
+    return createJsonResponse({ error: 'forbidden' }, 403);
+  const body = await readRecoveryBody(request);
+  const email = recoveryEmail(body?.email);
+  if (
+    !body ||
+    Object.keys(body).some(
+      (key) => !['email', 'password', 'confirmPassword', 'fullName', 'acceptedTerms'].includes(key),
+    ) ||
+    !email ||
+    typeof body.fullName !== 'string' ||
+    body.fullName.trim().length < 2 ||
+    body.fullName.trim().length > 120 ||
+    typeof body.password !== 'string' ||
+    body.password.length < 12 ||
+    body.password.length > 128 ||
+    body.password !== body.confirmPassword ||
+    body.acceptedTerms !== true
+  ) {
+    return createJsonResponse({ error: 'invalid_request' }, 400);
+  }
+  const config = getSupabaseAuthConfig();
+  if (!config) return createJsonResponse({ error: 'authentication_unavailable' }, 503);
+  const limited = await recoveryRateGate();
+  if (limited) return limited;
+  try {
+    const result = await upstreamRequest(endpoint(config, 'signup'), {
+      method: 'POST',
+      headers: { apikey: config.anonKey, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password: body.password }),
+    });
+    if (result.status >= 500)
+      return createJsonResponse({ error: 'authentication_unavailable' }, 503);
+    // Provider responses for duplicate addresses must not disclose account existence.
+    return createJsonResponse({
+      message: 'If registration can proceed, a verification code will be sent.',
+    });
+  } catch {
+    return createJsonResponse({ error: 'authentication_unavailable' }, 503);
+  }
+}
+
+export async function handleSignupResend(request: Request): Promise<Response> {
+  if (!validateStateChangingRequest(request))
+    return createJsonResponse({ error: 'forbidden' }, 403);
+  const body = await readRecoveryBody(request);
+  const email = recoveryEmail(body?.email);
+  if (!body || Object.keys(body).some((key) => key !== 'email') || !email)
+    return createJsonResponse({ error: 'invalid_request' }, 400);
+  const config = getSupabaseAuthConfig();
+  if (!config) return createJsonResponse({ error: 'authentication_unavailable' }, 503);
+  const limited = await recoveryRateGate();
+  if (limited) return limited;
+  try {
+    const result = await upstreamRequest(endpoint(config, 'resend'), {
+      method: 'POST',
+      headers: { apikey: config.anonKey, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, type: 'signup' }),
+    });
+    if (result.status >= 500)
+      return createJsonResponse({ error: 'authentication_unavailable' }, 503);
+    return createJsonResponse({
+      message: 'If registration can proceed, a verification code will be sent.',
+    });
+  } catch {
+    return createJsonResponse({ error: 'authentication_unavailable' }, 503);
+  }
+}
+
+/** OTP is submitted by POST only; fixed customer/technician route selects provision endpoint. */
+export async function handleSignupVerification(
+  request: Request,
+  profile: 'customer' | 'technician',
+): Promise<Response> {
+  if (!validateStateChangingRequest(request))
+    return createJsonResponse({ error: 'forbidden' }, 403);
+  const body = await readRecoveryBody(request);
+  const email = recoveryEmail(body?.email);
+  if (
+    !body ||
+    Object.keys(body).some((key) => !['email', 'otp', 'fullName'].includes(key)) ||
+    !email ||
+    typeof body.otp !== 'string' ||
+    !/^\d{6,8}$/.test(body.otp) ||
+    typeof body.fullName !== 'string' ||
+    body.fullName.trim().length < 2 ||
+    body.fullName.trim().length > 120
+  )
+    return createJsonResponse({ error: 'invalid_request' }, 400);
+  const config = getSupabaseAuthConfig();
+  const gate = loginRateGateUrl();
+  if (!config || !gate) return createJsonResponse({ error: 'authentication_unavailable' }, 503);
+  const limited = await recoveryRateGate();
+  if (limited) return limited;
+  try {
+    const verified = await upstreamRequest(endpoint(config, 'verify'), {
+      method: 'POST',
+      headers: { apikey: config.anonKey, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, token: body.otp, type: 'signup' }),
+    });
+    if ([400, 401, 403, 404, 422].includes(verified.status))
+      return createJsonResponse({ error: 'invalid_or_expired_code' }, 400);
+    if (!verified.ok) return createJsonResponse({ error: 'authentication_unavailable' }, 503);
+    const raw: unknown = await verified.json();
+    const tokens = readTokenResponse(raw);
+    const user =
+      raw && typeof raw === 'object' && 'user' in raw && raw.user && typeof raw.user === 'object'
+        ? (raw.user as Record<string, unknown>)
+        : null;
+    if (
+      !tokens ||
+      typeof user?.email_confirmed_at !== 'string' ||
+      !user.email_confirmed_at ||
+      tokens.user.email?.trim().toLowerCase() !== email
+    )
+      return createJsonResponse({ error: 'invalid_or_expired_code' }, 400);
+    let profileReady = false;
+    try {
+      // The backend verifies the access token independently and picks the fixed role.
+      const provision = await upstreamRequest(
+        gate.replace(/\/auth\/attempt$/, `/auth/provision/${profile}`),
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${tokens.accessToken}`,
+          },
+          body: JSON.stringify({ display_name: body.fullName.trim() }),
+        },
+      );
+      profileReady = provision.ok;
+    } catch {
+      /* Session permits an idempotent retry without resending the OTP. */
+    }
+    const response = createJsonResponse({ user: tokens.user, profileReady });
+    setAuthCookies(response, tokens);
+    return response;
+  } catch {
+    return createJsonResponse({ error: 'authentication_unavailable' }, 503);
+  }
+}

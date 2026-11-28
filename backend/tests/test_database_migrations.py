@@ -13,21 +13,45 @@ BACKEND_ROOT = Path(__file__).resolve().parents[1]
 ALEMBIC_CONFIG = BACKEND_ROOT / "alembic.ini"
 EXPECTED_TABLES = {
     "alembic_version",
+    "appliance_documents",
+    "appliance_service_history",
+    "appliances",
     "app_users",
     "booking_attachments",
     "booking_events",
     "booking_location_access_events",
+    "booking_location_sharing",
+    "in_app_notifications",
+    "notification_preferences",
+    "notification_deliveries",
+    "notification_delivery_attempts",
     "booking_quote_line_items",
     "booking_quotes",
     "booking_visits",
     "bookings",
     "customer_addresses",
     "customer_profiles",
+    "homepassport_audit_events",
+    "maintenance_reminders",
+    "operations_audit_events",
+    "review_reports",
+    "reviews",
+    "support_internal_notes",
+    "support_messages",
+    "support_ticket_events",
+    "support_tickets",
     "mutation_idempotency",
+    "replaced_parts",
     "roles",
     "service_categories",
     "service_catalog_audit_events",
     "services",
+    "simulated_payment_intents",
+    "simulated_payment_attempts",
+    "mock_webhook_events",
+    "simulated_ledger_accounts",
+    "simulated_ledger_journals",
+    "simulated_ledger_entries",
     "technician_availability_preferences",
     "technician_coverage_areas",
     "technician_profiles",
@@ -35,6 +59,9 @@ EXPECTED_TABLES = {
     "technician_verification_reviews",
     "user_audit_events",
     "user_roles",
+    "warranty_claim_history",
+    "warranty_claims",
+    "warranty_records",
 }
 
 
@@ -93,6 +120,11 @@ def test_full_migration_chain_upgrades_and_downgrades_sqlite(
                 )
             }
             assert connection.scalar(text("SELECT COUNT(*) FROM booking_visits")) == 0
+            assert connection.scalar(text("SELECT COUNT(*) FROM appliances")) == 0
+            assert connection.scalar(text("SELECT COUNT(*) FROM warranty_records")) == 0
+            assert "appliance_id" in {
+                column["name"] for column in inspect(connection).get_columns("bookings")
+            }
             assert (
                 connection.scalar(
                     text("SELECT COUNT(*) FROM booking_location_access_events")

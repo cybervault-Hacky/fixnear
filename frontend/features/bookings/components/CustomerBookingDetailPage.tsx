@@ -5,6 +5,7 @@ import type { FormEvent } from 'react';
 import { ArrowLeft, CalendarDays, MapPin, RefreshCw, ShieldCheck } from 'lucide-react';
 
 import { Button } from '@/components/ui/Button';
+import { BookingLocationSharing } from '@/features/bookings/components/BookingLocationSharing';
 import { DashboardCard } from '@/features/dashboard/components/DashboardCard';
 import { DashboardPageHeader } from '@/features/dashboard/components/DashboardPageHeader';
 import { BookingFrame } from '@/features/bookings/components/BookingFrame';
@@ -269,6 +270,8 @@ export function CustomerBookingDetailPage({ bookingId }: CustomerBookingDetailPa
           ) : null}
         </DashboardCard>
 
+        <BookingLocationSharing bookingId={bookingId} viewer="customer" />
+
         <DashboardCard
           title="Technician visit status and ETA"
           description="Visit updates are submitted manually for this booking. FixNear does not track technician movement in the background."
@@ -278,9 +281,12 @@ export function CustomerBookingDetailPage({ bookingId }: CustomerBookingDetailPa
             <p className="text-sm leading-6 text-midnight/75">
               Status:{' '}
               <strong className="capitalize">{booking.visit.status.replaceAll('_', ' ')}</strong>
-              {booking.visit.eta_at
+              {booking.visit.eta_at && booking.visit.eta_source && booking.visit.eta_updated_at
                 ? ` · ETA ${new Intl.DateTimeFormat('en-IN', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(booking.visit.eta_at))} (device local time)`
                 : ' · no ETA provided'}
+              {booking.visit.eta_at && booking.visit.eta_source && booking.visit.eta_updated_at
+                ? ` · ${booking.visit.eta_source === 'admin_manual' ? 'Admin' : 'Technician'} estimate, updated ${new Date(booking.visit.eta_updated_at).toLocaleString()}`
+                : ''}
             </p>
           ) : (
             <p className="text-sm leading-6 text-midnight/65">

@@ -67,6 +67,7 @@ export function NearbyTechnicianDiscovery({
   const [postalCode, setPostalCode] = useState('');
   const [radiusKm, setRadiusKm] = useState('25');
   const [result, setResult] = useState<NearbyTechnicianList | null>(null);
+  const [lastCriteria, setLastCriteria] = useState<NearbyLocationSearch | null>(null);
   const [view, setView] = useState<MapListView>('list');
   const [loading, setLoading] = useState(false);
   const [searchError, setSearchError] = useState('');
@@ -133,6 +134,20 @@ export function NearbyTechnicianDiscovery({
     setLoading(true);
     try {
       setResult(await findNearbyTechnicians(serviceSlug, criteria));
+      setLastCriteria(criteria);
+    } catch (error) {
+      setSearchError(errorMessage(error));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const changePage = async (offset: number) => {
+    if (!lastCriteria) return;
+    setLoading(true);
+    setSearchError('');
+    try {
+      setResult(await findNearbyTechnicians(serviceSlug, { ...lastCriteria, offset }));
     } catch (error) {
       setSearchError(errorMessage(error));
     } finally {
@@ -172,8 +187,9 @@ export function NearbyTechnicianDiscovery({
           </h2>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-midnight/65">
             Results include only technicians with an active account, approved verification, an
-            active skill for this service and a matching service area. FixNear does not check live
-            availability or confirm an appointment.
+            active skill for this service and a saved service area. Manual searches match area
+            fields; location searches use the distance to an approximate center, not a verified
+            coverage boundary. FixNear does not check live availability or confirm an appointment.
           </p>
         </div>
 
@@ -331,7 +347,7 @@ export function NearbyTechnicianDiscovery({
               {loading ? (
                 <LoaderCircle aria-hidden="true" size={16} className="animate-spin" />
               ) : null}
-              {loading ? 'Searching…' : 'Find eligible technicians'}
+              {loading ? 'Searching…' : 'Find service areas'}
             </button>
           </form>
 
@@ -343,7 +359,7 @@ export function NearbyTechnicianDiscovery({
                     <h3 className="text-lg font-semibold text-midnight">
                       {result.total === 0
                         ? 'No matching service areas'
-                        : `${result.total} eligible ${result.total === 1 ? 'technician' : 'technicians'}`}
+                        : `${result.total} matching ${result.total === 1 ? 'service area' : 'service areas'}`}
                     </h3>
                     <p className="mt-1 text-xs leading-5 text-midnight/55">{result.note}</p>
                   </div>
@@ -373,15 +389,48 @@ export function NearbyTechnicianDiscovery({
                   ) : null}
                 </div>
 
+                {result.total > result.limit && (
+                  <div
+                    className="mt-3 flex items-center gap-3 text-sm"
+                    aria-label="Search result pages"
+                  >
+                    <button
+                      type="button"
+                      disabled={loading || result.offset === 0}
+                      onClick={() => void changePage(Math.max(0, result.offset - result.limit))}
+                      className="rounded-lg border px-3 py-2 disabled:opacity-40"
+                    >
+                      Previous
+                    </button>
+                    <span>
+                      Showing {result.offset + 1}–
+                      {Math.min(result.offset + result.limit, result.total)} of {result.total}
+                    </span>
+                    <button
+                      type="button"
+                      disabled={loading || result.offset + result.limit >= result.total}
+                      onClick={() => void changePage(result.offset + result.limit)}
+                      className="rounded-lg border px-3 py-2 disabled:opacity-40"
+                    >
+                      Next
+                    </button>
+                  </div>
+                )}
+
                 {result.total === 0 ? (
                   <div className="mt-4 rounded-2xl border border-dashed border-midnight/20 bg-white p-6 text-sm leading-6 text-midnight/65">
                     No technician is displayed unless the database confirms active status, approved
-                    verification, a matching active service skill and service coverage. You can
+                    verification, a matching active service skill and saved service area. You can
                     still submit a request; admin assignment is handled separately.
                   </div>
                 ) : view === 'map' ? (
                   <div className="mt-4">
-                    <ServiceAreaMap technicians={result.results} />
+                    <ServiceAreaMap
+                      technicians={result.results}
+                      customerLocation={
+                        result.location_mode === 'coordinates' ? deviceLocation : null
+                      }
+                    />
                     <p className="mt-2 text-xs leading-5 text-midnight/50">
                       Markers are approximate service-area centers supplied by technicians; they do
                       not show technician homes, current position or availability.
@@ -411,7 +460,7 @@ export function NearbyTechnicianDiscovery({
                               {technician.professional_description}
                             </p>
                             <p className="mt-2 text-xs leading-5 text-midnight/55">
-                              Service area: {technician.coverage_area}
+                              Availability unknown · Service area: {technician.coverage_area}
                               {technician.years_experience !== null
                                 ? ` · ${technician.years_experience} years' experience`
                                 : ''}

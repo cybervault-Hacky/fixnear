@@ -140,6 +140,8 @@ def list_nearby_technicians(
     latitude: float | None,
     longitude: float | None,
     radius_km: float,
+    limit: int = 25,
+    offset: int = 0,
 ) -> dict[str, Any]:
     """Filter eligible providers by explicit search area or by their approximate coverage centers."""
 
@@ -202,6 +204,7 @@ def list_nearby_technicians(
             key=lambda item: (
                 item[2] if item[2] is not None else math.inf,
                 item[0].display_name.casefold(),
+                str(item[0].user_id),
             )
         )
         sort = "distance"
@@ -215,6 +218,7 @@ def list_nearby_technicians(
             key=lambda item: (
                 _coverage_label(item[1]).casefold(),
                 item[0].display_name.casefold(),
+                str(item[0].user_id),
             )
         )
         sort = "service_area"
@@ -225,12 +229,14 @@ def list_nearby_technicians(
         )
     results = [
         _nearby_payload(profile, coverage, service, distance)
-        for profile, coverage, distance in candidate_rows
+        for profile, coverage, distance in candidate_rows[offset : offset + limit]
     ]
     return {
         "service_slug": service.slug,
         "results": results,
-        "total": len(results),
+        "total": len(candidate_rows),
+        "limit": limit,
+        "offset": offset,
         "sort": sort,
         "location_mode": mode,
         "note": note,

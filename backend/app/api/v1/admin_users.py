@@ -11,6 +11,7 @@ from app.db.session import get_db_session
 from app.models import AppUser
 from app.schemas.accounts import (
     AdminManagedUserResponse,
+    AdminRoleChangeRequest,
     AdminStatusUpdateRequest,
     RoleCode,
 )
@@ -41,16 +42,18 @@ def get_user_for_management(
 def grant_user_role(
     user_id: UUID,
     role_code: RoleCode,
+    request: AdminRoleChangeRequest,
     actor: AdminActor,
     session: DatabaseSession,
 ) -> AdminManagedUserResponse:
-    """Grant a catalogued role; only an active database-backed admin can call this."""
+    """Grant a catalogued role; the mandatory reason is stored on the audit event."""
 
     response = grant_role(
         session,
         actor=actor,
         subject_id=user_id,
         role_code=role_code,
+        reason=request.reason,
     )
     session.commit()
     return response
@@ -60,16 +63,18 @@ def grant_user_role(
 def revoke_user_role(
     user_id: UUID,
     role_code: RoleCode,
+    request: AdminRoleChangeRequest,
     actor: AdminActor,
     session: DatabaseSession,
 ) -> AdminManagedUserResponse:
-    """Revoke a role and append an audit event when an assignment changes."""
+    """Revoke a role; the mandatory reason is stored on the audit event."""
 
     response = revoke_role(
         session,
         actor=actor,
         subject_id=user_id,
         role_code=role_code,
+        reason=request.reason,
     )
     session.commit()
     return response
@@ -89,6 +94,7 @@ def change_managed_user_status(
         actor=actor,
         subject_id=user_id,
         new_status=request.status,
+        reason=request.reason,
     )
     session.commit()
     return response

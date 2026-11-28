@@ -14,6 +14,7 @@ import {
   Trash2,
 } from 'lucide-react';
 
+import { BookingLocationSharing } from '@/features/bookings/components/BookingLocationSharing';
 import { DashboardCard } from '@/features/dashboard/components/DashboardCard';
 import { DashboardPageHeader } from '@/features/dashboard/components/DashboardPageHeader';
 import {
@@ -533,6 +534,8 @@ export function TechnicianBookingDetailPage({ bookingId }: TechnicianBookingDeta
         </Notice>
       )}
 
+      {canManageVisit ? <BookingLocationSharing bookingId={bookingId} viewer="technician" /> : null}
+
       {canManageVisit ? (
         <DashboardCard
           title="Visit status and ETA"
@@ -543,9 +546,12 @@ export function TechnicianBookingDetailPage({ bookingId }: TechnicianBookingDeta
             <p className="text-sm leading-6 text-midnight/70">
               Current visit status:{' '}
               <strong className="capitalize">{booking.visit.status.replaceAll('_', ' ')}</strong>
-              {booking.visit.eta_at
+              {booking.visit.eta_at && booking.visit.eta_source && booking.visit.eta_updated_at
                 ? ` · ETA ${new Intl.DateTimeFormat('en-IN', { dateStyle: 'medium', timeStyle: 'short', timeZone: localTimezone }).format(new Date(booking.visit.eta_at))} (${localTimezone})`
                 : ' · no ETA provided'}
+              {booking.visit.eta_at && booking.visit.eta_source && booking.visit.eta_updated_at
+                ? ` · ${booking.visit.eta_source === 'admin_manual' ? 'Admin' : 'Technician'} estimate, updated ${new Date(booking.visit.eta_updated_at).toLocaleString()}`
+                : ''}
             </p>
           ) : (
             <p className="text-sm leading-6 text-midnight/70">

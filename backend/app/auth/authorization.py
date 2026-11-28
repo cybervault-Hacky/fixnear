@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session, selectinload
 from app.auth.dependencies import get_current_identity
 from app.auth.tokens import VerifiedIdentity
 from app.db.session import get_db_session
-from app.models import AppUser
+from app.models import AppUser, TechnicianProfile
 from app.schemas.accounts import RoleCode
 
 
@@ -57,3 +57,18 @@ def require_role(role: RoleCode) -> Callable[..., AppUser]:
 require_customer_role = require_role(RoleCode.CUSTOMER)
 require_technician_role = require_role(RoleCode.TECHNICIAN)
 require_admin_role = require_role(RoleCode.ADMIN)
+
+
+def require_approved_technician(
+    user: Annotated[AppUser, Depends(require_technician_role)],
+    session: Annotated[Session, Depends(get_db_session)],
+) -> AppUser:
+    """Permit operational access only while the server-owned review is approved.
+
+    Onboarding and verification endpoints deliberately use require_technician_role
+    instead, so pending applicants can complete and submit their own profile.
+    """
+    profile = session.get(TechnicianProfile, user.id)
+    if profile is None or profile.verification_status != 'approved':
+        raise _access_denied()
+    return user
